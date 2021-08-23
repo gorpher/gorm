@@ -51,7 +51,7 @@ func DeleteBeforeAssociations(db *gorm.DB) {
 								}
 
 								if len(selects) > 0 {
-									tx = tx.Select(selects)
+									tx = tx.Columns(selects)
 								}
 							}
 

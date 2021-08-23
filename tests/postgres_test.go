@@ -31,12 +31,12 @@ func TestPostgres(t *testing.T) {
 	}
 
 	harumph := Harumph{}
-	if err := DB.Create(&harumph).Error; err == nil {
+	if err := DB.Insert(&harumph).Error; err == nil {
 		t.Fatalf("should failed to create data, name can't be blank")
 	}
 
 	harumph = Harumph{Name: "jinzhu"}
-	if err := DB.Create(&harumph).Error; err != nil {
+	if err := DB.Insert(&harumph).Error; err != nil {
 		t.Fatalf("should be able to create data, but got %v", err)
 	}
 
@@ -78,7 +78,7 @@ func TestMany2ManyWithDefaultValueUUID(t *testing.T) {
 		},
 	}
 
-	if err := DB.Create(&post).Error; err != nil {
+	if err := DB.Insert(&post).Error; err != nil {
 		t.Errorf("Failed, got error: %v", err)
 	}
 }

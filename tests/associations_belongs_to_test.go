@@ -9,7 +9,7 @@ import (
 func TestBelongsToAssociation(t *testing.T) {
 	var user = *GetUser("belongs-to", Config{Company: true, Manager: true})
 
-	if err := DB.Create(&user).Error; err != nil {
+	if err := DB.Insert(&user).Error; err != nil {
 		t.Fatalf("errors happened when create: %v", err)
 	}
 
@@ -141,7 +141,7 @@ func TestBelongsToAssociationForSlice(t *testing.T) {
 		*GetUser("slice-belongs-to-3", Config{Company: true, Manager: true}),
 	}
 
-	DB.Create(&users)
+	DB.Insert(&users)
 
 	AssertAssociationCount(t, users, "Company", 3, "")
 	AssertAssociationCount(t, users, "Manager", 2, "")

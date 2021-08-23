@@ -18,7 +18,7 @@ func TestDistinct(t *testing.T) {
 	}
 	users[0].Age = 20
 
-	if err := DB.Create(&users).Error; err != nil {
+	if err := DB.Insert(&users).Error; err != nil {
 		t.Fatalf("errors happened when create users: %v", err)
 	}
 

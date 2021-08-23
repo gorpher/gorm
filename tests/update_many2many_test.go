@@ -10,17 +10,17 @@ import (
 func TestUpdateMany2ManyAssociations(t *testing.T) {
 	var user = *GetUser("update-many2many", Config{})
 
-	if err := DB.Create(&user).Error; err != nil {
+	if err := DB.Insert(&user).Error; err != nil {
 		t.Fatalf("errors happened when create: %v", err)
 	}
 
 	user.Languages = []Language{{Code: "zh-CN", Name: "Chinese"}, {Code: "en", Name: "English"}}
 	for _, lang := range user.Languages {
-		DB.Create(&lang)
+		DB.Insert(&lang)
 	}
 	user.Friends = []*User{{Name: "friend-1"}, {Name: "friend-2"}}
 
-	if err := DB.Save(&user).Error; err != nil {
+	if err := DB.InsertOrUpdate(&user).Error; err != nil {
 		t.Fatalf("errors happened when update: %v", err)
 	}
 
@@ -36,7 +36,7 @@ func TestUpdateMany2ManyAssociations(t *testing.T) {
 		user.Languages[idx].Name += "new"
 	}
 
-	if err := DB.Save(&user).Error; err != nil {
+	if err := DB.InsertOrUpdate(&user).Error; err != nil {
 		t.Fatalf("errors happened when update: %v", err)
 	}
 
@@ -44,7 +44,7 @@ func TestUpdateMany2ManyAssociations(t *testing.T) {
 	DB.Preload("Languages").Preload("Friends").Find(&user3, "id = ?", user.ID)
 	CheckUser(t, user2, user3)
 
-	if err := DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&user).Error; err != nil {
+	if err := DB.Session(&gorm.Session{FullSaveAssociations: true}).InsertOrUpdate(&user).Error; err != nil {
 		t.Fatalf("errors happened when update: %v", err)
 	}
 

@@ -13,7 +13,7 @@ func TestTransaction(t *testing.T) {
 	tx := DB.Begin()
 	user := *GetUser("transaction", Config{})
 
-	if err := tx.Save(&user).Error; err != nil {
+	if err := tx.InsertOrUpdate(&user).Error; err != nil {
 		t.Fatalf("No error should raise, but got %v", err)
 	}
 
@@ -23,7 +23,7 @@ func TestTransaction(t *testing.T) {
 
 	user1 := *GetUser("transaction1-1", Config{})
 
-	if err := tx.Save(&user1).Error; err != nil {
+	if err := tx.InsertOrUpdate(&user1).Error; err != nil {
 		t.Fatalf("No error should raise, but got %v", err)
 	}
 
@@ -44,7 +44,7 @@ func TestTransaction(t *testing.T) {
 	txDB := DB.Where("fake_name = ?", "fake_name")
 	tx2 := txDB.Session(&gorm.Session{NewDB: true}).Begin()
 	user2 := *GetUser("transaction-2", Config{})
-	if err := tx2.Save(&user2).Error; err != nil {
+	if err := tx2.InsertOrUpdate(&user2).Error; err != nil {
 		t.Fatalf("No error should raise, but got %v", err)
 	}
 
@@ -65,7 +65,7 @@ func TestCancelTransaction(t *testing.T) {
 	cancelFunc()
 
 	user := *GetUser("cancel_transaction", Config{})
-	DB.Create(&user)
+	DB.Insert(&user)
 
 	err := DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var result User
@@ -91,7 +91,7 @@ func TestTransactionWithBlock(t *testing.T) {
 	// rollback
 	err := DB.Transaction(func(tx *gorm.DB) error {
 		user := *GetUser("transaction-block", Config{})
-		if err := tx.Save(&user).Error; err != nil {
+		if err := tx.InsertOrUpdate(&user).Error; err != nil {
 			t.Fatalf("No error should raise")
 		}
 
@@ -113,7 +113,7 @@ func TestTransactionWithBlock(t *testing.T) {
 	// commit
 	DB.Transaction(func(tx *gorm.DB) error {
 		user := *GetUser("transaction-block-2", Config{})
-		if err := tx.Save(&user).Error; err != nil {
+		if err := tx.InsertOrUpdate(&user).Error; err != nil {
 			t.Fatalf("No error should raise")
 		}
 
@@ -131,7 +131,7 @@ func TestTransactionWithBlock(t *testing.T) {
 	assertPanic(func() {
 		DB.Transaction(func(tx *gorm.DB) error {
 			user := *GetUser("transaction-block-3", Config{})
-			if err := tx.Save(&user).Error; err != nil {
+			if err := tx.InsertOrUpdate(&user).Error; err != nil {
 				t.Fatalf("No error should raise")
 			}
 
@@ -151,7 +151,7 @@ func TestTransactionWithBlock(t *testing.T) {
 func TestTransactionRaiseErrorOnRollbackAfterCommit(t *testing.T) {
 	tx := DB.Begin()
 	user := User{Name: "transaction"}
-	if err := tx.Save(&user).Error; err != nil {
+	if err := tx.InsertOrUpdate(&user).Error; err != nil {
 		t.Fatalf("No error should raise")
 	}
 
@@ -168,7 +168,7 @@ func TestTransactionWithSavePoint(t *testing.T) {
 	tx := DB.Begin()
 
 	user := *GetUser("transaction-save-point", Config{})
-	tx.Create(&user)
+	tx.Insert(&user)
 
 	if err := tx.First(&User{}, "name = ?", user.Name).Error; err != nil {
 		t.Fatalf("Should find saved record")
@@ -179,7 +179,7 @@ func TestTransactionWithSavePoint(t *testing.T) {
 	}
 
 	user1 := *GetUser("transaction-save-point-1", Config{})
-	tx.Create(&user1)
+	tx.Insert(&user1)
 
 	if err := tx.First(&User{}, "name = ?", user1.Name).Error; err != nil {
 		t.Fatalf("Should find saved record")
@@ -198,7 +198,7 @@ func TestTransactionWithSavePoint(t *testing.T) {
 	}
 
 	user2 := *GetUser("transaction-save-point-2", Config{})
-	tx.Create(&user2)
+	tx.Insert(&user2)
 
 	if err := tx.First(&User{}, "name = ?", user2.Name).Error; err != nil {
 		t.Fatalf("Should find saved record")
@@ -229,14 +229,14 @@ func TestNestedTransactionWithBlock(t *testing.T) {
 	)
 
 	if err := DB.Transaction(func(tx *gorm.DB) error {
-		tx.Create(&user)
+		tx.Insert(&user)
 
 		if err := tx.First(&User{}, "name = ?", user.Name).Error; err != nil {
 			t.Fatalf("Should find saved record")
 		}
 
 		if err := tx.Transaction(func(tx1 *gorm.DB) error {
-			tx1.Create(&user1)
+			tx1.Insert(&user1)
 
 			if err := tx1.First(&User{}, "name = ?", user1.Name).Error; err != nil {
 				t.Fatalf("Should find saved record")
@@ -252,7 +252,7 @@ func TestNestedTransactionWithBlock(t *testing.T) {
 		}
 
 		if err := tx.Transaction(func(tx2 *gorm.DB) error {
-			tx2.Create(&user2)
+			tx2.Insert(&user2)
 
 			if err := tx2.First(&User{}, "name = ?", user2.Name).Error; err != nil {
 				t.Fatalf("Should find saved record")
@@ -292,14 +292,14 @@ func TestDisabledNestedTransaction(t *testing.T) {
 	)
 
 	if err := DB.Session(&gorm.Session{DisableNestedTransaction: true}).Transaction(func(tx *gorm.DB) error {
-		tx.Create(&user)
+		tx.Insert(&user)
 
 		if err := tx.First(&User{}, "name = ?", user.Name).Error; err != nil {
 			t.Fatalf("Should find saved record")
 		}
 
 		if err := tx.Transaction(func(tx1 *gorm.DB) error {
-			tx1.Create(&user1)
+			tx1.Insert(&user1)
 
 			if err := tx1.First(&User{}, "name = ?", user1.Name).Error; err != nil {
 				t.Fatalf("Should find saved record")
@@ -315,7 +315,7 @@ func TestDisabledNestedTransaction(t *testing.T) {
 		}
 
 		if err := tx.Transaction(func(tx2 *gorm.DB) error {
-			tx2.Create(&user2)
+			tx2.Insert(&user2)
 
 			if err := tx2.First(&User{}, "name = ?", user2.Name).Error; err != nil {
 				t.Fatalf("Should find saved record")

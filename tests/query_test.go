@@ -23,7 +23,7 @@ func TestFind(t *testing.T) {
 		*GetUser("find", Config{}),
 	}
 
-	if err := DB.Create(&users).Error; err != nil {
+	if err := DB.Insert(&users).Error; err != nil {
 		t.Fatalf("errors happened when create users: %v", err)
 	}
 
@@ -225,7 +225,7 @@ func TestFind(t *testing.T) {
 func TestQueryWithAssociation(t *testing.T) {
 	user := *GetUser("query_with_association", Config{Account: true, Pets: 2, Toys: 1, Company: true, Manager: true, Team: 2, Languages: 1, Friends: 3})
 
-	if err := DB.Create(&user).Error; err != nil {
+	if err := DB.Insert(&user).Error; err != nil {
 		t.Fatalf("errors happened when create user: %v", err)
 	}
 
@@ -250,7 +250,7 @@ func TestFindInBatches(t *testing.T) {
 		*GetUser("find_in_batches", Config{}),
 	}
 
-	DB.Create(&users)
+	DB.Insert(&users)
 
 	var (
 		results    []User
@@ -272,7 +272,7 @@ func TestFindInBatches(t *testing.T) {
 			results[idx].Name = results[idx].Name + "_new"
 		}
 
-		if err := tx.Save(results).Error; err != nil {
+		if err := tx.InsertOrUpdate(results).Error; err != nil {
 			t.Errorf("failed to save users, got error %v", err)
 		}
 
@@ -306,7 +306,7 @@ func TestFindInBatchesWithError(t *testing.T) {
 		*GetUser("find_in_batches_with_error", Config{}),
 	}
 
-	DB.Create(&users)
+	DB.Insert(&users)
 
 	var (
 		results    []User
@@ -326,7 +326,7 @@ func TestFindInBatchesWithError(t *testing.T) {
 
 func TestFillSmallerStruct(t *testing.T) {
 	user := User{Name: "SmallerUser", Age: 100}
-	DB.Save(&user)
+	DB.InsertOrUpdate(&user)
 	type SimpleUser struct {
 		ID        int64
 		Name      string
@@ -342,14 +342,14 @@ func TestFillSmallerStruct(t *testing.T) {
 	AssertObjEqual(t, user, simpleUser, "Name", "ID", "UpdatedAt", "CreatedAt")
 
 	var simpleUser2 SimpleUser
-	if err := DB.Model(&User{}).Select("id").First(&simpleUser2, user.ID).Error; err != nil {
+	if err := DB.Model(&User{}).Columns("id").First(&simpleUser2, user.ID).Error; err != nil {
 		t.Fatalf("Failed to query smaller user, got error %v", err)
 	}
 
 	AssertObjEqual(t, user, simpleUser2, "ID")
 
 	var simpleUsers []SimpleUser
-	if err := DB.Model(&User{}).Select("id").Find(&simpleUsers, user.ID).Error; err != nil || len(simpleUsers) != 1 {
+	if err := DB.Model(&User{}).Columns("id").Find(&simpleUsers, user.ID).Error; err != nil || len(simpleUsers) != 1 {
 		t.Fatalf("Failed to query smaller user, got error %v", err)
 	}
 
@@ -382,7 +382,7 @@ func TestFillSmallerStruct(t *testing.T) {
 
 func TestFillSmallerStructWithAllFields(t *testing.T) {
 	user := User{Name: "SmallerUser", Age: 100}
-	DB.Save(&user)
+	DB.InsertOrUpdate(&user)
 	type SimpleUser struct {
 		ID        int64
 		Name      string
@@ -440,7 +440,7 @@ func TestNot(t *testing.T) {
 	if !regexp.MustCompile("SELECT \\* FROM .*users.* WHERE .*name.* IS NOT NULL").MatchString(result.Statement.SQL.String()) {
 		t.Fatalf("Build NOT condition, but got %v", result.Statement.SQL.String())
 	}
-	
+
 	result = dryDB.Not(map[string]interface{}{"name": []string{"jinzhu", "jinzhu 2"}}).Find(&User{})
 	if !regexp.MustCompile("SELECT \\* FROM .*users.* WHERE .*name.* NOT IN \\(.+,.+\\)").MatchString(result.Statement.SQL.String()) {
 		t.Fatalf("Build NOT condition, but got %v", result.Statement.SQL.String())
@@ -566,7 +566,7 @@ func TestPluck(t *testing.T) {
 		GetUser("pluck-user3", Config{}),
 	}
 
-	DB.Create(&users)
+	DB.Insert(&users)
 
 	var names []string
 	if err := DB.Model(User{}).Where("name like ?", "pluck-user%").Order("name").Pluck("name", &names).Error; err != nil {
@@ -626,10 +626,10 @@ func TestPluck(t *testing.T) {
 
 func TestSelect(t *testing.T) {
 	user := User{Name: "SelectUser1"}
-	DB.Save(&user)
+	DB.InsertOrUpdate(&user)
 
 	var result User
-	DB.Where("name = ?", user.Name).Select("name").Find(&result)
+	DB.Where("name = ?", user.Name).Columns("name").Find(&result)
 	if result.ID != 0 {
 		t.Errorf("Should not have ID because only selected name, %+v", result.ID)
 	}
@@ -639,7 +639,7 @@ func TestSelect(t *testing.T) {
 	}
 
 	var result2 User
-	DB.Where("name = ?", user.Name).Select("name as name").Find(&result2)
+	DB.Where("name = ?", user.Name).Columns("name as name").Find(&result2)
 	if result2.ID != 0 {
 		t.Errorf("Should not have ID because only selected name, %+v", result2.ID)
 	}
@@ -649,46 +649,46 @@ func TestSelect(t *testing.T) {
 	}
 
 	dryDB := DB.Session(&gorm.Session{DryRun: true})
-	r := dryDB.Select("name", "age").Find(&User{})
+	r := dryDB.Columns("name", "age").Find(&User{})
 	if !regexp.MustCompile("SELECT .*name.*,.*age.* FROM .*users.*").MatchString(r.Statement.SQL.String()) {
-		t.Fatalf("Build Select with strings, but got %v", r.Statement.SQL.String())
+		t.Fatalf("Build Columns with strings, but got %v", r.Statement.SQL.String())
 	}
 
-	r = dryDB.Select([]string{"name", "age"}).Find(&User{})
+	r = dryDB.Columns([]string{"name", "age"}).Find(&User{})
 	if !regexp.MustCompile("SELECT .*name.*,.*age.* FROM .*users.*").MatchString(r.Statement.SQL.String()) {
-		t.Fatalf("Build Select with slice, but got %v", r.Statement.SQL.String())
+		t.Fatalf("Build Columns with slice, but got %v", r.Statement.SQL.String())
 	}
 
 	// SELECT COALESCE(age,'42') FROM users;
-	r = dryDB.Table("users").Select("COALESCE(age,?)", 42).Find(&User{})
+	r = dryDB.Table("users").Columns("COALESCE(age,?)", 42).Find(&User{})
 	if !regexp.MustCompile(`SELECT COALESCE\(age,.*\) FROM .*users.*`).MatchString(r.Statement.SQL.String()) {
-		t.Fatalf("Build Select with func, but got %v", r.Statement.SQL.String())
+		t.Fatalf("Build Columns with func, but got %v", r.Statement.SQL.String())
 	}
 
 	// named arguments
-	r = dryDB.Table("users").Select("COALESCE(age, @default)", sql.Named("default", 42)).Find(&User{})
+	r = dryDB.Table("users").Columns("COALESCE(age, @default)", sql.Named("default", 42)).Find(&User{})
 	if !regexp.MustCompile(`SELECT COALESCE\(age,.*\) FROM .*users.*`).MatchString(r.Statement.SQL.String()) {
-		t.Fatalf("Build Select with func, but got %v", r.Statement.SQL.String())
+		t.Fatalf("Build Columns with func, but got %v", r.Statement.SQL.String())
 	}
 
-	if _, err := DB.Table("users").Select("COALESCE(age,?)", "42").Rows(); err != nil {
+	if _, err := DB.Table("users").Columns("COALESCE(age,?)", "42").Rows(); err != nil {
 		t.Fatalf("Failed, got error: %v", err)
 	}
 
-	r = dryDB.Select("u.*").Table("users as u").First(&User{}, user.ID)
+	r = dryDB.Columns("u.*").Table("users as u").First(&User{}, user.ID)
 	if !regexp.MustCompile(`SELECT u\.\* FROM .*users.*`).MatchString(r.Statement.SQL.String()) {
-		t.Fatalf("Build Select with u.*, but got %v", r.Statement.SQL.String())
+		t.Fatalf("Build Columns with u.*, but got %v", r.Statement.SQL.String())
 	}
 
-	r = dryDB.Select("count(*)").Select("u.*").Table("users as u").First(&User{}, user.ID)
+	r = dryDB.Columns("count(*)").Columns("u.*").Table("users as u").First(&User{}, user.ID)
 	if !regexp.MustCompile(`SELECT u\.\* FROM .*users.*`).MatchString(r.Statement.SQL.String()) {
-		t.Fatalf("Build Select with u.*, but got %v", r.Statement.SQL.String())
+		t.Fatalf("Build Columns with u.*, but got %v", r.Statement.SQL.String())
 	}
 }
 
 func TestOmit(t *testing.T) {
 	user := User{Name: "OmitUser1", Age: 20}
-	DB.Save(&user)
+	DB.InsertOrUpdate(&user)
 
 	var result User
 	DB.Where("name = ?", user.Name).Omit("name").Find(&result)
@@ -703,7 +703,7 @@ func TestOmit(t *testing.T) {
 
 func TestOmitWithAllFields(t *testing.T) {
 	user := User{Name: "OmitUser1", Age: 20}
-	DB.Save(&user)
+	DB.InsertOrUpdate(&user)
 
 	var userResult User
 	DB.Session(&gorm.Session{QueryFields: true}).Where("users.name = ?", user.Name).Omit("name").Find(&userResult)
@@ -731,10 +731,10 @@ func TestPluckWithSelect(t *testing.T) {
 		{Name: "pluck_with_select_2", Age: 26},
 	}
 
-	DB.Create(&users)
+	DB.Insert(&users)
 
 	var userAges []int
-	err := DB.Model(&User{}).Where("name like ?", "pluck_with_select%").Select("age + 1 as user_age").Pluck("user_age", &userAges).Error
+	err := DB.Model(&User{}).Where("name like ?", "pluck_with_select%").Columns("age + 1 as user_age").Pluck("user_age", &userAges).Error
 	if err != nil {
 		t.Fatalf("got error when pluck user_age: %v", err)
 	}
@@ -745,9 +745,9 @@ func TestPluckWithSelect(t *testing.T) {
 }
 
 func TestSelectWithVariables(t *testing.T) {
-	DB.Save(&User{Name: "select_with_variables"})
+	DB.InsertOrUpdate(&User{Name: "select_with_variables"})
 
-	rows, _ := DB.Table("users").Where("name = ?", "select_with_variables").Select("? as fake", gorm.Expr("name")).Rows()
+	rows, _ := DB.Table("users").Where("name = ?", "select_with_variables").Columns("? as fake", gorm.Expr("name")).Rows()
 
 	if !rows.Next() {
 		t.Errorf("Should have returned at least one row")
@@ -760,10 +760,10 @@ func TestSelectWithVariables(t *testing.T) {
 }
 
 func TestSelectWithArrayInput(t *testing.T) {
-	DB.Save(&User{Name: "select_with_array", Age: 42})
+	DB.InsertOrUpdate(&User{Name: "select_with_array", Age: 42})
 
 	var user User
-	DB.Select([]string{"name", "age"}).Where("age = 42 AND name = ?", "select_with_array").First(&user)
+	DB.Columns([]string{"name", "age"}).Where("age = 42 AND name = ?", "select_with_array").First(&user)
 
 	if user.Name != "select_with_array" || user.Age != 42 {
 		t.Errorf("Should have selected both age and name")
@@ -785,9 +785,9 @@ func TestCustomizedTypePrimaryKey(t *testing.T) {
 	p1 := CustomizedTypePrimaryKey{Name: "p1"}
 	p2 := CustomizedTypePrimaryKey{Name: "p2"}
 	p3 := CustomizedTypePrimaryKey{Name: "p3"}
-	DB.Create(&p1)
-	DB.Create(&p2)
-	DB.Create(&p3)
+	DB.Insert(&p1)
+	DB.Insert(&p2)
+	DB.Insert(&p3)
 
 	var p CustomizedTypePrimaryKey
 
@@ -816,7 +816,7 @@ func TestStringPrimaryKeyForNumericValueStartingWithZero(t *testing.T) {
 	}
 
 	address := AddressByZipCode{ZipCode: "00501", Address: "Holtsville"}
-	DB.Create(&address)
+	DB.Insert(&address)
 
 	var result AddressByZipCode
 	DB.First(&result, "00501")
@@ -826,7 +826,7 @@ func TestStringPrimaryKeyForNumericValueStartingWithZero(t *testing.T) {
 
 func TestSearchWithEmptyChain(t *testing.T) {
 	user := User{Name: "search_with_empty_chain", Age: 1}
-	DB.Create(&user)
+	DB.Insert(&user)
 
 	var result User
 	if DB.Where("").Where("").First(&result).Error != nil {
@@ -912,7 +912,7 @@ func TestLimit(t *testing.T) {
 		{Name: "LimitUser6", Age: 20},
 	}
 
-	DB.Create(&users)
+	DB.Insert(&users)
 
 	var users1, users2, users3 []User
 	DB.Order("age desc").Limit(3).Find(&users1).Limit(5).Find(&users2).Limit(-1).Find(&users3)
@@ -924,7 +924,7 @@ func TestLimit(t *testing.T) {
 
 func TestOffset(t *testing.T) {
 	for i := 0; i < 20; i++ {
-		DB.Save(&User{Name: fmt.Sprintf("OffsetUser%v", i)})
+		DB.InsertOrUpdate(&User{Name: fmt.Sprintf("OffsetUser%v", i)})
 	}
 	var users1, users2, users3, users4 []User
 
@@ -949,7 +949,7 @@ func TestSearchWithMap(t *testing.T) {
 		*GetUser("map_search_user4", Config{Company: true}),
 	}
 
-	DB.Create(&users)
+	DB.Insert(&users)
 
 	var user User
 	DB.First(&user, map[string]interface{}{"name": users[0].Name})
@@ -1016,9 +1016,9 @@ func TestSubQuery(t *testing.T) {
 		{Name: "subquery_4", Age: 40},
 	}
 
-	DB.Create(&users)
+	DB.Insert(&users)
 
-	if err := DB.Select("*").Where("name IN (?)", DB.Select("name").Table("users").Where("name LIKE ?", "subquery_%")).Find(&users).Error; err != nil {
+	if err := DB.Columns("*").Where("name IN (?)", DB.Columns("name").Table("users").Where("name LIKE ?", "subquery_%")).Find(&users).Error; err != nil {
 		t.Fatalf("got error: %v", err)
 	}
 
@@ -1026,8 +1026,8 @@ func TestSubQuery(t *testing.T) {
 		t.Errorf("Four users should be found, instead found %d", len(users))
 	}
 
-	DB.Select("*").Where("name LIKE ?", "subquery%").Where("age >= (?)", DB.
-		Select("AVG(age)").Table("users").Where("name LIKE ?", "subquery%")).Find(&users)
+	DB.Columns("*").Where("name LIKE ?", "subquery%").Where("age >= (?)", DB.
+		Columns("AVG(age)").Table("users").Where("name LIKE ?", "subquery%")).Find(&users)
 
 	if len(users) != 2 {
 		t.Errorf("Two users should be found, instead found %d", len(users))
@@ -1041,7 +1041,7 @@ func TestSubQueryWithRaw(t *testing.T) {
 		{Name: "subquery_raw_3", Age: 30},
 		{Name: "subquery_raw_4", Age: 40},
 	}
-	DB.Create(&users)
+	DB.Insert(&users)
 
 	var count int64
 	err := DB.Raw("select count(*) from (?) tmp where 1 = ? AND name IN (?)", DB.Raw("select name from users where age >= ? and name in (?)", 10, []string{"subquery_raw_1", "subquery_raw_2", "subquery_raw_3"}), 1, DB.Raw("select name from users where age >= ? and name in (?)", 20, []string{"subquery_raw_1", "subquery_raw_2", "subquery_raw_3"})).Scan(&count).Error
@@ -1055,7 +1055,7 @@ func TestSubQueryWithRaw(t *testing.T) {
 
 	err = DB.Raw("select count(*) from (?) tmp",
 		DB.Table("users").
-			Select("name").
+			Columns("name").
 			Where("age >= ? and name in (?)", 20, []string{"subquery_raw_1", "subquery_raw_3"}).
 			Group("name"),
 	).Count(&count).Error
@@ -1070,7 +1070,7 @@ func TestSubQueryWithRaw(t *testing.T) {
 
 	err = DB.Raw("select count(*) from (?) tmp",
 		DB.Table("users").
-			Select("name").
+			Columns("name").
 			Where("name LIKE ?", "subquery_raw%").
 			Not("age <= ?", 10).Not("name IN (?)", []string{"subquery_raw_1", "subquery_raw_3"}).
 			Group("name"),
@@ -1092,11 +1092,11 @@ func TestSubQueryWithHaving(t *testing.T) {
 		{Name: "subquery_having_3", Age: 30},
 		{Name: "subquery_having_4", Age: 40},
 	}
-	DB.Create(&users)
+	DB.Insert(&users)
 
 	var results []User
-	DB.Select("AVG(age) as avgage").Where("name LIKE ?", "subquery_having%").Group("name").Having("AVG(age) > (?)", DB.
-		Select("AVG(age)").Where("name LIKE ?", "subquery_having%").Table("users")).Find(&results)
+	DB.Columns("AVG(age) as avgage").Where("name LIKE ?", "subquery_having%").Group("name").Having("AVG(age) > (?)", DB.
+		Columns("AVG(age)").Where("name LIKE ?", "subquery_having%").Table("users")).Find(&results)
 
 	if len(results) != 2 {
 		t.Errorf("Two user group should be found, instead found %d", len(results))
@@ -1105,7 +1105,7 @@ func TestSubQueryWithHaving(t *testing.T) {
 
 func TestScanNullValue(t *testing.T) {
 	user := GetUser("scan_null_value", Config{})
-	DB.Create(&user)
+	DB.Insert(&user)
 
 	if err := DB.Model(&user).Update("age", nil).Error; err != nil {
 		t.Fatalf("failed to update column age for struct, got error %v", err)
@@ -1123,7 +1123,7 @@ func TestScanNullValue(t *testing.T) {
 		*GetUser("scan_null_value_for_slice_2", Config{}),
 		*GetUser("scan_null_value_for_slice_3", Config{}),
 	}
-	DB.Create(&users)
+	DB.Insert(&users)
 
 	if err := DB.Model(&users[0]).Update("age", nil).Error; err != nil {
 		t.Fatalf("failed to update column age for struct, got error %v", err)

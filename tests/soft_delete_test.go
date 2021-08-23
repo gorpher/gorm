@@ -13,7 +13,7 @@ import (
 
 func TestSoftDelete(t *testing.T) {
 	user := *GetUser("SoftDelete", Config{})
-	DB.Save(&user)
+	DB.InsertOrUpdate(&user)
 
 	var count int64
 	var age uint
@@ -22,7 +22,7 @@ func TestSoftDelete(t *testing.T) {
 		t.Errorf("Count soft deleted record, expects: %v, got: %v", 1, count)
 	}
 
-	if DB.Model(&User{}).Select("age").Where("name = ?", user.Name).Scan(&age).Error != nil || age != user.Age {
+	if DB.Model(&User{}).Columns("age").Where("name = ?", user.Name).Scan(&age).Error != nil || age != user.Age {
 		t.Errorf("Age soft deleted record, expects: %v, got: %v", 0, age)
 	}
 
@@ -49,7 +49,7 @@ func TestSoftDelete(t *testing.T) {
 	}
 
 	age = 0
-	if DB.Model(&User{}).Select("age").Where("name = ?", user.Name).Scan(&age).Error != nil || age != 0 {
+	if DB.Model(&User{}).Columns("age").Where("name = ?", user.Name).Scan(&age).Error != nil || age != 0 {
 		t.Errorf("Age soft deleted record, expects: %v, got: %v", 0, age)
 	}
 
@@ -63,7 +63,7 @@ func TestSoftDelete(t *testing.T) {
 	}
 
 	age = 0
-	if DB.Unscoped().Model(&User{}).Select("age").Where("name = ?", user.Name).Scan(&age).Error != nil || age != user.Age {
+	if DB.Unscoped().Model(&User{}).Columns("age").Where("name = ?", user.Name).Scan(&age).Error != nil || age != user.Age {
 		t.Errorf("Age soft deleted record, expects: %v, got: %v", 0, age)
 	}
 

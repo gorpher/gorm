@@ -45,7 +45,7 @@ func TestScannerValuer(t *testing.T) {
 		ExampleStructPtr: &ExampleStruct{"name", "value2"},
 	}
 
-	if err := DB.Create(&data).Error; err != nil {
+	if err := DB.Insert(&data).Error; err != nil {
 		t.Fatalf("No error should happened when create scanner valuer struct, but got %v", err)
 	}
 
@@ -120,12 +120,12 @@ func TestInvalidValuer(t *testing.T) {
 		ExampleStructPtr: &ExampleStruct{"name", "value2"},
 	}
 
-	if err := DB.Create(&data).Error; err == nil {
+	if err := DB.Insert(&data).Error; err == nil {
 		t.Errorf("Should failed to create data with invalid data")
 	}
 
 	data.Password = EncryptedData("pass1")
-	if err := DB.Create(&data).Error; err != nil {
+	if err := DB.Insert(&data).Error; err != nil {
 		t.Errorf("Should got no error when creating data, but got %v", err)
 	}
 
@@ -333,7 +333,7 @@ func TestGORMValuer(t *testing.T) {
 
 	dryRunDB := DB.Session(&gorm.Session{DryRun: true})
 
-	stmt := dryRunDB.Create(&UserWithPoint{
+	stmt := dryRunDB.Insert(&UserWithPoint{
 		Name:  "jinzhu",
 		Point: Point{X: 100, Y: 100},
 	}).Statement
@@ -350,7 +350,7 @@ func TestGORMValuer(t *testing.T) {
 		t.Errorf("generated vars is not equal, got %v", stmt.Vars)
 	}
 
-	stmt = dryRunDB.Model(UserWithPoint{}).Create(map[string]interface{}{
+	stmt = dryRunDB.Model(UserWithPoint{}).Insert(map[string]interface{}{
 		"Name":  "jinzhu",
 		"Point": clause.Expr{SQL: "ST_PointFromText(?)", Vars: []interface{}{"POINT(100 100)"}},
 	}).Statement
@@ -363,7 +363,7 @@ func TestGORMValuer(t *testing.T) {
 		t.Errorf("generated vars is not equal, got %v", stmt.Vars)
 	}
 
-	stmt = dryRunDB.Table("user_with_points").Create(&map[string]interface{}{
+	stmt = dryRunDB.Table("user_with_points").Insert(&map[string]interface{}{
 		"Name":  "jinzhu",
 		"Point": clause.Expr{SQL: "ST_PointFromText(?)", Vars: []interface{}{"POINT(100 100)"}},
 	}).Statement

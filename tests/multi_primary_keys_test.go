@@ -65,7 +65,7 @@ func TestManyToManyWithMultiPrimaryKeys(t *testing.T) {
 		},
 	}
 
-	DB.Save(&blog)
+	DB.InsertOrUpdate(&blog)
 	if !compareTags(blog.Tags, []string{"tag1", "tag2"}) {
 		t.Fatalf("Blog should has two tags")
 	}
@@ -157,13 +157,13 @@ func TestManyToManyWithCustomizedForeignKeys(t *testing.T) {
 			{Locale: "ZH", Value: "tag2"},
 		},
 	}
-	DB.Save(&blog)
+	DB.InsertOrUpdate(&blog)
 
 	blog2 := Blog{
 		ID:     blog.ID,
 		Locale: "EN",
 	}
-	DB.Create(&blog2)
+	DB.Insert(&blog2)
 
 	if !compareTags(blog.SharedTags, []string{"tag1", "tag2"}) {
 		t.Fatalf("Blog should has two tags")
@@ -282,13 +282,13 @@ func TestManyToManyWithCustomizedForeignKeys2(t *testing.T) {
 			{Locale: "ZH", Value: "tag2"},
 		},
 	}
-	DB.Save(&blog)
+	DB.InsertOrUpdate(&blog)
 
 	blog2 := Blog{
 		ID:     blog.ID,
 		Locale: "EN",
 	}
-	DB.Create(&blog2)
+	DB.Insert(&blog2)
 
 	// Append
 	var tag3 = &Tag{Locale: "ZH", Value: "tag3"}
@@ -437,7 +437,7 @@ func TestCompositePrimaryKeysAssociations(t *testing.T) {
 		},
 	}
 
-	DB.Create(&book)
+	DB.Insert(&book)
 
 	var result Book
 	if err := DB.Preload("Labels").First(&result, book.ID).Error; err != nil {

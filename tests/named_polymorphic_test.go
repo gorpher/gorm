@@ -18,7 +18,7 @@ func TestNamedPolymorphic(t *testing.T) {
 	DB.AutoMigrate(&Hamster{})
 
 	hamster := Hamster{Name: "Mr. Hammond", PreferredToy: Toy{Name: "bike"}, OtherToy: Toy{Name: "treadmill"}}
-	DB.Save(&hamster)
+	DB.InsertOrUpdate(&hamster)
 
 	hamster2 := Hamster{}
 	DB.Preload("PreferredToy").Preload("OtherToy").Find(&hamster2, hamster.Id)

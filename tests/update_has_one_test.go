@@ -11,13 +11,13 @@ import (
 func TestUpdateHasOne(t *testing.T) {
 	var user = *GetUser("update-has-one", Config{})
 
-	if err := DB.Create(&user).Error; err != nil {
+	if err := DB.Insert(&user).Error; err != nil {
 		t.Fatalf("errors happened when create: %v", err)
 	}
 
 	user.Account = Account{Number: "account-has-one-association"}
 
-	if err := DB.Save(&user).Error; err != nil {
+	if err := DB.InsertOrUpdate(&user).Error; err != nil {
 		t.Fatalf("errors happened when update: %v", err)
 	}
 
@@ -26,7 +26,7 @@ func TestUpdateHasOne(t *testing.T) {
 	CheckUser(t, user2, user)
 
 	user.Account.Number += "new"
-	if err := DB.Save(&user).Error; err != nil {
+	if err := DB.InsertOrUpdate(&user).Error; err != nil {
 		t.Fatalf("errors happened when update: %v", err)
 	}
 
@@ -37,7 +37,7 @@ func TestUpdateHasOne(t *testing.T) {
 	var lastUpdatedAt = user2.Account.UpdatedAt
 	time.Sleep(time.Second)
 
-	if err := DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&user).Error; err != nil {
+	if err := DB.Session(&gorm.Session{FullSaveAssociations: true}).InsertOrUpdate(&user).Error; err != nil {
 		t.Fatalf("errors happened when update: %v", err)
 	}
 
@@ -54,13 +54,13 @@ func TestUpdateHasOne(t *testing.T) {
 	t.Run("Polymorphic", func(t *testing.T) {
 		var pet = Pet{Name: "create"}
 
-		if err := DB.Create(&pet).Error; err != nil {
+		if err := DB.Insert(&pet).Error; err != nil {
 			t.Fatalf("errors happened when create: %v", err)
 		}
 
 		pet.Toy = Toy{Name: "Update-HasOneAssociation-Polymorphic"}
 
-		if err := DB.Save(&pet).Error; err != nil {
+		if err := DB.InsertOrUpdate(&pet).Error; err != nil {
 			t.Fatalf("errors happened when create: %v", err)
 		}
 
@@ -69,7 +69,7 @@ func TestUpdateHasOne(t *testing.T) {
 		CheckPet(t, pet2, pet)
 
 		pet.Toy.Name += "new"
-		if err := DB.Save(&pet).Error; err != nil {
+		if err := DB.InsertOrUpdate(&pet).Error; err != nil {
 			t.Fatalf("errors happened when update: %v", err)
 		}
 
@@ -77,7 +77,7 @@ func TestUpdateHasOne(t *testing.T) {
 		DB.Preload("Toy").Find(&pet3, "id = ?", pet.ID)
 		CheckPet(t, pet2, pet3)
 
-		if err := DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&pet).Error; err != nil {
+		if err := DB.Session(&gorm.Session{FullSaveAssociations: true}).InsertOrUpdate(&pet).Error; err != nil {
 			t.Fatalf("errors happened when update: %v", err)
 		}
 

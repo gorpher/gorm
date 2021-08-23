@@ -20,7 +20,7 @@ func TestCount(t *testing.T) {
 		count, count1, count2 int64
 	)
 
-	DB.Save(&user1).Save(&user2).Save(&user3)
+	DB.InsertOrUpdate(&user1).InsertOrUpdate(&user2).InsertOrUpdate(&user3)
 
 	if err := DB.Where("name = ?", user1.Name).Or("name = ?", user3.Name).Find(&users).Count(&count).Error; err != nil {
 		t.Errorf(fmt.Sprintf("Count should work, but got err %v", err))
@@ -60,7 +60,7 @@ func TestCount(t *testing.T) {
 	}
 
 	dryDB := DB.Session(&gorm.Session{DryRun: true})
-	result := dryDB.Table("users").Select("name").Count(&count)
+	result := dryDB.Table("users").Columns("name").Count(&count)
 	if !regexp.MustCompile(`SELECT COUNT\(.name.\) FROM .*users.*`).MatchString(result.Statement.SQL.String()) {
 		t.Fatalf("Build count with select, but got %v", result.Statement.SQL.String())
 	}
@@ -81,7 +81,7 @@ func TestCount(t *testing.T) {
 	}
 
 	var count6 int64
-	if err := DB.Model(&User{}).Where("name in ?", []string{user1.Name, user2.Name, user3.Name}).Select(
+	if err := DB.Model(&User{}).Where("name in ?", []string{user1.Name, user2.Name, user3.Name}).Columns(
 		"(CASE WHEN name=? THEN ? ELSE ? END) as name", "count-1", "main", "other",
 	).Count(&count6).Find(&users).Error; err != nil || count6 != 3 {
 		t.Fatalf(fmt.Sprintf("Count should work, but got err %v", err))
@@ -95,7 +95,7 @@ func TestCount(t *testing.T) {
 	AssertEqual(t, users, expects)
 
 	var count7 int64
-	if err := DB.Model(&User{}).Where("name in ?", []string{user1.Name, user2.Name, user3.Name}).Select(
+	if err := DB.Model(&User{}).Where("name in ?", []string{user1.Name, user2.Name, user3.Name}).Columns(
 		"(CASE WHEN name=? THEN ? ELSE ? END) as name, age", "count-1", "main", "other",
 	).Count(&count7).Find(&users).Error; err != nil || count7 != 3 {
 		t.Fatalf(fmt.Sprintf("Count should work, but got err %v", err))
@@ -109,7 +109,7 @@ func TestCount(t *testing.T) {
 	AssertEqual(t, users, expects)
 
 	var count8 int64
-	if err := DB.Model(&User{}).Where("name in ?", []string{user1.Name, user2.Name, user3.Name}).Select(
+	if err := DB.Model(&User{}).Where("name in ?", []string{user1.Name, user2.Name, user3.Name}).Columns(
 		"(CASE WHEN age=18 THEN 1 ELSE 2 END) as age", "name",
 	).Count(&count8).Find(&users).Error; err != nil || count8 != 3 {
 		t.Fatalf(fmt.Sprintf("Count should work, but got err %v", err))

@@ -44,7 +44,7 @@ func TestUpdate(t *testing.T) {
 		CheckUser(t, last, *users[2])
 	}
 
-	if err := DB.Create(&users).Error; err != nil {
+	if err := DB.Insert(&users).Error; err != nil {
 		t.Fatalf("errors happened when create: %v", err)
 	} else if user.ID == 0 {
 		t.Fatalf("user's primary value should not zero, %v", user.ID)
@@ -103,15 +103,15 @@ func TestUpdate(t *testing.T) {
 
 	user.Active = false
 	user.Age = 1
-	if err := DB.Save(user).Error; err != nil {
+	if err := DB.InsertOrUpdate(user).Error; err != nil {
 		t.Errorf("errors happened when update: %v", err)
 	} else if user.Age != 1 {
 		t.Errorf("Age should equals to 1, but got %v", user.Age)
 	} else if user.Active != false {
 		t.Errorf("Active should equals to false, but got %v", user.Active)
 	}
-	checkUpdatedAtChanged("Save", user.UpdatedAt)
-	checkOtherData("Save")
+	checkUpdatedAtChanged("InsertOrUpdate", user.UpdatedAt)
+	checkOtherData("InsertOrUpdate")
 
 	var result4 User
 	if err := DB.Where("id = ?", user.ID).First(&result4).Error; err != nil {
@@ -127,7 +127,7 @@ func TestUpdates(t *testing.T) {
 		GetUser("updates_02", Config{}),
 	}
 
-	DB.Create(&users)
+	DB.Insert(&users)
 	lastUpdatedAt := users[0].UpdatedAt
 
 	// update with map
@@ -177,7 +177,7 @@ func TestUpdateColumn(t *testing.T) {
 		GetUser("update_column_02", Config{}),
 	}
 
-	DB.Create(&users)
+	DB.Insert(&users)
 	lastUpdatedAt := users[1].UpdatedAt
 
 	// update with map
@@ -235,7 +235,7 @@ func TestBlockGlobalUpdate(t *testing.T) {
 
 func TestSelectWithUpdate(t *testing.T) {
 	user := *GetUser("select_update", Config{Account: true, Pets: 3, Toys: 3, Company: true, Manager: true, Team: 3, Languages: 3, Friends: 4})
-	DB.Create(&user)
+	DB.Insert(&user)
 
 	var result User
 	DB.First(&result, user.ID)
@@ -252,7 +252,7 @@ func TestSelectWithUpdate(t *testing.T) {
 	result.Languages = user2.Languages
 	result.Friends = user2.Friends
 
-	DB.Select("Name", "Account", "Toys", "Manager", "ManagerID", "Languages").Save(&result)
+	DB.Columns("Name", "Account", "Toys", "Manager", "ManagerID", "Languages").InsertOrUpdate(&result)
 
 	var result2 User
 	DB.Preload("Account").Preload("Pets").Preload("Toys").Preload("Company").Preload("Manager").Preload("Team").Preload("Languages").Preload("Friends").First(&result2, user.ID)
@@ -278,7 +278,7 @@ func TestSelectWithUpdate(t *testing.T) {
 
 	AssertObjEqual(t, result2, result, "Name", "Account", "Toys", "Manager", "ManagerID", "Languages")
 
-	DB.Model(&result).Select("Name", "Age").Updates(User{Name: "update_with_select"})
+	DB.Model(&result).Columns("Name", "Age").Updates(User{Name: "update_with_select"})
 	if result.Age != 0 || result.Name != "update_with_select" {
 		t.Fatalf("Failed to update struct with select, got %+v", result)
 	}
@@ -288,7 +288,7 @@ func TestSelectWithUpdate(t *testing.T) {
 	DB.First(&result3, result.ID)
 	AssertObjEqual(t, result, result3, "Name", "Age", "UpdatedAt")
 
-	DB.Model(&result).Select("Name", "Age", "UpdatedAt").Updates(User{Name: "update_with_select"})
+	DB.Model(&result).Columns("Name", "Age", "UpdatedAt").Updates(User{Name: "update_with_select"})
 
 	if utils.AssertEqual(result.UpdatedAt, user.UpdatedAt) {
 		t.Fatalf("Update struct should update UpdatedAt, was %+v, got %+v", result.UpdatedAt, user.UpdatedAt)
@@ -297,7 +297,7 @@ func TestSelectWithUpdate(t *testing.T) {
 
 func TestSelectWithUpdateWithMap(t *testing.T) {
 	user := *GetUser("select_update_map", Config{Account: true, Pets: 3, Toys: 3, Company: true, Manager: true, Team: 3, Languages: 3, Friends: 4})
-	DB.Create(&user)
+	DB.Insert(&user)
 
 	var result User
 	DB.First(&result, user.ID)
@@ -345,7 +345,7 @@ func TestSelectWithUpdateWithMap(t *testing.T) {
 
 func TestWithUpdateWithInvalidMap(t *testing.T) {
 	user := *GetUser("update_with_invalid_map", Config{})
-	DB.Create(&user)
+	DB.Insert(&user)
 
 	if err := DB.Model(&user).Updates(map[string]string{"name": "jinzhu"}).Error; !errors.Is(err, gorm.ErrInvalidData) {
 		t.Errorf("should returns error for unsupported updating data")
@@ -354,7 +354,7 @@ func TestWithUpdateWithInvalidMap(t *testing.T) {
 
 func TestOmitWithUpdate(t *testing.T) {
 	user := *GetUser("omit_update", Config{Account: true, Pets: 3, Toys: 3, Company: true, Manager: true, Team: 3, Languages: 3, Friends: 4})
-	DB.Create(&user)
+	DB.Insert(&user)
 
 	var result User
 	DB.First(&result, user.ID)
@@ -371,7 +371,7 @@ func TestOmitWithUpdate(t *testing.T) {
 	result.Languages = user2.Languages
 	result.Friends = user2.Friends
 
-	DB.Omit("Name", "Account", "Toys", "Manager", "ManagerID", "Languages").Save(&result)
+	DB.Omit("Name", "Account", "Toys", "Manager", "ManagerID", "Languages").InsertOrUpdate(&result)
 
 	var result2 User
 	DB.Preload("Account").Preload("Pets").Preload("Toys").Preload("Company").Preload("Manager").Preload("Team").Preload("Languages").Preload("Friends").First(&result2, user.ID)
@@ -404,7 +404,7 @@ func TestOmitWithUpdate(t *testing.T) {
 
 func TestOmitWithUpdateWithMap(t *testing.T) {
 	user := *GetUser("omit_update_map", Config{Account: true, Pets: 3, Toys: 3, Company: true, Manager: true, Team: 3, Languages: 3, Friends: 4})
-	DB.Create(&user)
+	DB.Insert(&user)
 
 	var result User
 	DB.First(&result, user.ID)
@@ -456,7 +456,7 @@ func TestOmitWithUpdateWithMap(t *testing.T) {
 
 func TestSelectWithUpdateColumn(t *testing.T) {
 	user := *GetUser("select_with_update_column", Config{Account: true, Pets: 3, Toys: 3, Company: true, Manager: true, Team: 3, Languages: 3, Friends: 4})
-	DB.Create(&user)
+	DB.Insert(&user)
 
 	updateValues := map[string]interface{}{"Name": "new_name", "Age": 50}
 
@@ -465,7 +465,7 @@ func TestSelectWithUpdateColumn(t *testing.T) {
 
 	time.Sleep(time.Second)
 	lastUpdatedAt := result.UpdatedAt
-	DB.Model(&result).Select("Name").Updates(updateValues)
+	DB.Model(&result).Columns("Name").Updates(updateValues)
 
 	var result2 User
 	DB.First(&result2, user.ID)
@@ -481,7 +481,7 @@ func TestSelectWithUpdateColumn(t *testing.T) {
 
 func TestOmitWithUpdateColumn(t *testing.T) {
 	user := *GetUser("omit_with_update_column", Config{Account: true, Pets: 3, Toys: 3, Company: true, Manager: true, Team: 3, Languages: 3, Friends: 4})
-	DB.Create(&user)
+	DB.Insert(&user)
 
 	updateValues := map[string]interface{}{"Name": "new_name", "Age": 50}
 
@@ -499,7 +499,7 @@ func TestOmitWithUpdateColumn(t *testing.T) {
 
 func TestUpdateColumnsSkipsAssociations(t *testing.T) {
 	user := *GetUser("update_column_skips_association", Config{})
-	DB.Create(&user)
+	DB.Insert(&user)
 
 	// Update a single field of the user and verify that the changed address is not stored.
 	newAge := uint(100)
@@ -526,7 +526,7 @@ func TestUpdateColumnsSkipsAssociations(t *testing.T) {
 
 func TestUpdatesWithBlankValues(t *testing.T) {
 	user := *GetUser("updates_with_blank_value", Config{})
-	DB.Save(&user)
+	DB.InsertOrUpdate(&user)
 
 	var user2 User
 	user2.ID = user.ID
@@ -550,7 +550,7 @@ func TestUpdatesTableWithIgnoredValues(t *testing.T) {
 	DB.AutoMigrate(&ElementWithIgnoredField{})
 
 	elem := ElementWithIgnoredField{Value: "foo", IgnoredField: 10}
-	DB.Save(&elem)
+	DB.InsertOrUpdate(&elem)
 
 	DB.Model(&ElementWithIgnoredField{}).
 		Where("id = ?", elem.Id).
@@ -568,11 +568,11 @@ func TestUpdatesTableWithIgnoredValues(t *testing.T) {
 
 func TestUpdateFromSubQuery(t *testing.T) {
 	user := *GetUser("update_from_sub_query", Config{Company: true})
-	if err := DB.Create(&user).Error; err != nil {
+	if err := DB.Insert(&user).Error; err != nil {
 		t.Errorf("failed to create user, got error: %v", err)
 	}
 
-	if err := DB.Model(&user).Update("name", DB.Model(&Company{}).Select("name").Where("companies.id = users.company_id")).Error; err != nil {
+	if err := DB.Model(&user).Update("name", DB.Model(&Company{}).Columns("name").Where("companies.id = users.company_id")).Error; err != nil {
 		t.Errorf("failed to update with sub query, got error %v", err)
 	}
 
@@ -584,7 +584,7 @@ func TestUpdateFromSubQuery(t *testing.T) {
 	}
 
 	DB.Model(&user.Company).Update("Name", "new company name")
-	if err := DB.Table("users").Where("1 = 1").Update("name", DB.Table("companies").Select("name").Where("companies.id = users.company_id")).Error; err != nil {
+	if err := DB.Table("users").Where("1 = 1").Update("name", DB.Table("companies").Columns("name").Where("companies.id = users.company_id")).Error; err != nil {
 		t.Errorf("failed to update with sub query, got error %v", err)
 	}
 
@@ -596,14 +596,14 @@ func TestUpdateFromSubQuery(t *testing.T) {
 
 func TestSave(t *testing.T) {
 	user := *GetUser("save", Config{})
-	DB.Create(&user)
+	DB.Insert(&user)
 
 	if err := DB.First(&User{}, "name = ?", "save").Error; err != nil {
 		t.Fatalf("failed to find created user")
 	}
 
 	user.Name = "save2"
-	DB.Save(&user)
+	DB.InsertOrUpdate(&user)
 
 	var result User
 	if err := DB.First(&result, "name = ?", "save2").Error; err != nil || result.ID != user.ID {
@@ -611,13 +611,13 @@ func TestSave(t *testing.T) {
 	}
 
 	user2 := *GetUser("save2", Config{})
-	DB.Create(&user2)
+	DB.Insert(&user2)
 
 	time.Sleep(time.Second)
 	user1UpdatedAt := result.UpdatedAt
 	user2UpdatedAt := user2.UpdatedAt
 	var users = []*User{&result, &user2}
-	DB.Save(&users)
+	DB.InsertOrUpdate(&users)
 
 	if user1UpdatedAt.Format(time.RFC1123Z) == result.UpdatedAt.Format(time.RFC1123Z) {
 		t.Fatalf("user's updated at should be changed, expects: %+v, got: %+v", user1UpdatedAt, result.UpdatedAt)
@@ -638,7 +638,7 @@ func TestSave(t *testing.T) {
 	}
 
 	dryDB := DB.Session(&gorm.Session{DryRun: true})
-	stmt := dryDB.Save(&user).Statement
+	stmt := dryDB.InsertOrUpdate(&user).Statement
 	if !regexp.MustCompile("WHERE .id. = [^ ]+$").MatchString(stmt.SQL.String()) {
 		t.Fatalf("invalid updating SQL, got %v", stmt.SQL.String())
 	}
@@ -646,7 +646,7 @@ func TestSave(t *testing.T) {
 
 func TestSaveWithPrimaryValue(t *testing.T) {
 	lang := Language{Code: "save", Name: "save"}
-	if result := DB.Save(&lang); result.RowsAffected != 1 {
+	if result := DB.InsertOrUpdate(&lang); result.RowsAffected != 1 {
 		t.Errorf("should create language, rows affected: %v", result.RowsAffected)
 	}
 
@@ -655,7 +655,7 @@ func TestSaveWithPrimaryValue(t *testing.T) {
 	AssertEqual(t, result, lang)
 
 	lang.Name = "save name2"
-	if result := DB.Save(&lang); result.RowsAffected != 1 {
+	if result := DB.InsertOrUpdate(&lang); result.RowsAffected != 1 {
 		t.Errorf("should update language")
 	}
 
@@ -666,7 +666,7 @@ func TestSaveWithPrimaryValue(t *testing.T) {
 	DB.Table("langs").Migrator().DropTable(&Language{})
 	DB.Table("langs").AutoMigrate(&Language{})
 
-	if err := DB.Table("langs").Save(&lang).Error; err != nil {
+	if err := DB.Table("langs").InsertOrUpdate(&lang).Error; err != nil {
 		t.Errorf("no error should happen when creating data, but got %v", err)
 	}
 
@@ -676,7 +676,7 @@ func TestSaveWithPrimaryValue(t *testing.T) {
 	}
 
 	lang.Name += "name2"
-	if err := DB.Table("langs").Save(&lang).Error; err != nil {
+	if err := DB.Table("langs").InsertOrUpdate(&lang).Error; err != nil {
 		t.Errorf("no error should happen when creating data, but got %v", err)
 	}
 

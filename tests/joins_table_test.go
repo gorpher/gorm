@@ -41,7 +41,7 @@ func TestOverrideJoinTable(t *testing.T) {
 	address1 := Address{Name: "address 1"}
 	address2 := Address{Name: "address 2"}
 	person := Person{Name: "person", Addresses: []Address{address1, address2}}
-	DB.Create(&person)
+	DB.Insert(&person)
 
 	var addresses1 []Address
 	if err := DB.Model(&person).Association("Addresses").Find(&addresses1); err != nil || len(addresses1) != 2 {
@@ -101,8 +101,8 @@ func TestOverrideJoinTable(t *testing.T) {
 	address2_1 := Address{Name: "address 2-1"}
 	address2_2 := Address{Name: "address 2-2"}
 	person2 := Person{Name: "person_2", Addresses: []Address{address2_1, address2_2}}
-	DB.Create(&person2)
-	if err := DB.Select(clause.Associations).Delete(&person2).Error; err != nil {
+	DB.Insert(&person2)
+	if err := DB.Columns(clause.Associations).Delete(&person2).Error; err != nil {
 		t.Fatalf("failed to delete person, got error: %v", err)
 	}
 

@@ -59,7 +59,7 @@ func TestAssociationNotNullClear(t *testing.T) {
 		}},
 	}
 
-	if err := DB.Create(&member).Error; err != nil {
+	if err := DB.Insert(&member).Error; err != nil {
 		t.Fatalf("Failed to create test data, got error: %v", err)
 	}
 
@@ -90,7 +90,7 @@ func TestForeignKeyConstraints(t *testing.T) {
 
 	member := Member{Refer: 1, Name: "foreign_key_constraints", Profile: Profile{Name: "my_profile"}}
 
-	DB.Create(&member)
+	DB.Insert(&member)
 
 	var profile Profile
 	if err := DB.First(&profile, "id = ?", member.Profile.ID).Error; err != nil {
@@ -145,7 +145,7 @@ func TestForeignKeyConstraintsBelongsTo(t *testing.T) {
 
 	member := Member{Name: "foreign_key_constraints_belongs_to", Profile: Profile{Name: "my_profile_belongs_to", Refer: 1}}
 
-	DB.Create(&member)
+	DB.Insert(&member)
 
 	var profile Profile
 	if err := DB.First(&profile, "id = ?", member.Profile.ID).Error; err != nil {

@@ -25,7 +25,7 @@ func TestPreloadWithAssociations(t *testing.T) {
 		Friends:   1,
 	})
 
-	if err := DB.Create(&user).Error; err != nil {
+	if err := DB.Insert(&user).Error; err != nil {
 		t.Fatalf("errors happened when create: %v", err)
 	}
 
@@ -57,7 +57,7 @@ func TestNestedPreload(t *testing.T) {
 		pet.Toy = Toy{Name: "toy_nested_preload_" + strconv.Itoa(idx+1)}
 	}
 
-	if err := DB.Create(&user).Error; err != nil {
+	if err := DB.Insert(&user).Error; err != nil {
 		t.Fatalf("errors happened when create: %v", err)
 	}
 
@@ -87,7 +87,7 @@ func TestNestedPreloadForSlice(t *testing.T) {
 		}
 	}
 
-	if err := DB.Create(&users).Error; err != nil {
+	if err := DB.Insert(&users).Error; err != nil {
 		t.Fatalf("errors happened when create: %v", err)
 	}
 
@@ -111,7 +111,7 @@ func TestPreloadWithConds(t *testing.T) {
 		*GetUser("slice_nested_preload_3", Config{Account: true}),
 	}
 
-	if err := DB.Create(&users).Error; err != nil {
+	if err := DB.Insert(&users).Error; err != nil {
 		t.Fatalf("errors happened when create: %v", err)
 	}
 
@@ -136,7 +136,7 @@ func TestPreloadWithConds(t *testing.T) {
 
 	var users3 []User
 	if err := DB.Preload("Account", func(tx *gorm.DB) *gorm.DB {
-		return tx.Table("accounts AS a").Select("a.*")
+		return tx.Table("accounts AS a").Columns("a.*")
 	}).Find(&users3, "id IN ?", userIDs).Error; err != nil {
 		t.Errorf("failed to query, got error %v", err)
 	}
@@ -162,7 +162,7 @@ func TestNestedPreloadWithConds(t *testing.T) {
 		}
 	}
 
-	if err := DB.Create(&users).Error; err != nil {
+	if err := DB.Insert(&users).Error; err != nil {
 		t.Fatalf("errors happened when create: %v", err)
 	}
 
@@ -201,7 +201,7 @@ func TestNestedPreloadWithConds(t *testing.T) {
 
 func TestPreloadEmptyData(t *testing.T) {
 	var user = *GetUser("user_without_associations", Config{})
-	DB.Create(&user)
+	DB.Insert(&user)
 
 	DB.Preload("Team").Preload("Languages").Preload("Friends").First(&user, "name = ?", user.Name)
 

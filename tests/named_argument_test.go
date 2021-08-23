@@ -20,7 +20,7 @@ func TestNamedArg(t *testing.T) {
 	DB.AutoMigrate(&NamedUser{})
 
 	namedUser := NamedUser{Name1: "jinzhu1", Name2: "jinzhu2", Name3: "jinzhu3"}
-	DB.Create(&namedUser)
+	DB.Insert(&namedUser)
 
 	var result NamedUser
 	DB.First(&result, "name1 = @name OR name2 = @name OR name3 = @name", sql.Named("name", "jinzhu2"))

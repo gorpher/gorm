@@ -66,13 +66,13 @@ func (db *DB) Distinct(args ...interface{}) (tx *DB) {
 	tx = db.getInstance()
 	tx.Statement.Distinct = true
 	if len(args) > 0 {
-		tx = tx.Select(args[0], args[1:]...)
+		tx = tx.Columns(args[0], args[1:]...)
 	}
 	return
 }
 
-// Select specify fields that you want when querying, creating, updating
-func (db *DB) Select(query interface{}, args ...interface{}) (tx *DB) {
+// Columns specify fields that you want when querying, creating, updating
+func (db *DB) Columns(query interface{}, args ...interface{}) (tx *DB) {
 	tx = db.getInstance()
 
 	switch v := query.(type) {

@@ -10,13 +10,13 @@ import (
 func TestUpdateBelongsTo(t *testing.T) {
 	var user = *GetUser("update-belongs-to", Config{})
 
-	if err := DB.Create(&user).Error; err != nil {
+	if err := DB.Insert(&user).Error; err != nil {
 		t.Fatalf("errors happened when create: %v", err)
 	}
 
 	user.Company = Company{Name: "company-belongs-to-association"}
 	user.Manager = &User{Name: "manager-belongs-to-association"}
-	if err := DB.Save(&user).Error; err != nil {
+	if err := DB.InsertOrUpdate(&user).Error; err != nil {
 		t.Fatalf("errors happened when update: %v", err)
 	}
 
@@ -26,7 +26,7 @@ func TestUpdateBelongsTo(t *testing.T) {
 
 	user.Company.Name += "new"
 	user.Manager.Name += "new"
-	if err := DB.Save(&user).Error; err != nil {
+	if err := DB.InsertOrUpdate(&user).Error; err != nil {
 		t.Fatalf("errors happened when update: %v", err)
 	}
 
@@ -34,7 +34,7 @@ func TestUpdateBelongsTo(t *testing.T) {
 	DB.Preload("Company").Preload("Manager").Find(&user3, "id = ?", user.ID)
 	CheckUser(t, user2, user3)
 
-	if err := DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&user).Error; err != nil {
+	if err := DB.Session(&gorm.Session{FullSaveAssociations: true}).InsertOrUpdate(&user).Error; err != nil {
 		t.Fatalf("errors happened when update: %v", err)
 	}
 

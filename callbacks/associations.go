@@ -14,7 +14,7 @@ func SaveBeforeAssociations(create bool) func(db *gorm.DB) {
 		if db.Error == nil && db.Statement.Schema != nil {
 			selectColumns, restricted := db.Statement.SelectAndOmitColumns(create, !create)
 
-			// Save Belongs To associations
+			// InsertOrUpdate Belongs To associations
 			for _, rel := range db.Statement.Schema.Relationships.BelongsTo {
 				if v, ok := selectColumns[rel.Name]; (ok && !v) || (!ok && restricted) {
 					continue
@@ -96,7 +96,7 @@ func SaveAfterAssociations(create bool) func(db *gorm.DB) {
 		if db.Error == nil && db.Statement.Schema != nil {
 			selectColumns, restricted := db.Statement.SelectAndOmitColumns(create, !create)
 
-			// Save Has One associations
+			// InsertOrUpdate Has One associations
 			for _, rel := range db.Statement.Schema.Relationships.HasOne {
 				if v, ok := selectColumns[rel.Name]; (ok && !v) || (!ok && restricted) {
 					continue
@@ -170,7 +170,7 @@ func SaveAfterAssociations(create bool) func(db *gorm.DB) {
 				}
 			}
 
-			// Save Has Many associations
+			// InsertOrUpdate Has Many associations
 			for _, rel := range db.Statement.Schema.Relationships.HasMany {
 				if v, ok := selectColumns[rel.Name]; (ok && !v) || (!ok && restricted) {
 					continue
@@ -228,7 +228,7 @@ func SaveAfterAssociations(create bool) func(db *gorm.DB) {
 				}
 			}
 
-			// Save Many2Many associations
+			// InsertOrUpdate Many2Many associations
 			for _, rel := range db.Statement.Schema.Relationships.Many2Many {
 				if v, ok := selectColumns[rel.Name]; (ok && !v) || (!ok && restricted) {
 					continue
@@ -303,7 +303,7 @@ func SaveAfterAssociations(create bool) func(db *gorm.DB) {
 					db.AddError(db.Session(&gorm.Session{NewDB: true}).Clauses(clause.OnConflict{DoNothing: true}).Session(&gorm.Session{
 						SkipHooks:                db.Statement.SkipHooks,
 						DisableNestedTransaction: true,
-					}).Create(joins.Interface()).Error)
+					}).Insert(joins.Interface()).Error)
 				}
 			}
 		}
@@ -377,7 +377,7 @@ func saveAssociations(db *gorm.DB, rel *schema.Relationship, values interface{},
 	}
 
 	if len(selects) > 0 {
-		tx = tx.Select(selects)
+		tx = tx.Columns(selects)
 	} else if restricted && len(omits) == 0 {
 		tx = tx.Omit(clause.Associations)
 	}
@@ -386,5 +386,5 @@ func saveAssociations(db *gorm.DB, rel *schema.Relationship, values interface{},
 		tx = tx.Omit(omits...)
 	}
 
-	return db.AddError(tx.Create(values).Error)
+	return db.AddError(tx.Insert(values).Error)
 }

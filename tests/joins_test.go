@@ -12,7 +12,7 @@ import (
 func TestJoins(t *testing.T) {
 	user := *GetUser("joins-1", Config{Company: true, Manager: true, Account: true})
 
-	DB.Create(&user)
+	DB.Insert(&user)
 
 	var user2 User
 	if err := DB.Joins("Company").Joins("Manager").Joins("Account").First(&user2, "users.name = ?", user.Name).Error; err != nil {
@@ -29,7 +29,7 @@ func TestJoinsForSlice(t *testing.T) {
 		*GetUser("slice-joins-3", Config{Company: true, Manager: true, Account: true}),
 	}
 
-	DB.Create(&users)
+	DB.Insert(&users)
 
 	var userIDs []uint
 	for _, user := range users {
@@ -58,7 +58,7 @@ func TestJoinsForSlice(t *testing.T) {
 
 func TestJoinConds(t *testing.T) {
 	var user = *GetUser("joins-conds", Config{Account: true, Pets: 3})
-	DB.Save(&user)
+	DB.InsertOrUpdate(&user)
 
 	var users1 []User
 	DB.Joins("inner join pets on pets.user_id = users.id").Where("users.name = ?", user.Name).Find(&users1)
@@ -112,11 +112,11 @@ func TestJoinsWithSelect(t *testing.T) {
 	}
 
 	user := *GetUser("joins_with_select", Config{Pets: 2})
-	DB.Save(&user)
+	DB.InsertOrUpdate(&user)
 
 	var results []result
 
-	DB.Table("users").Select("users.id, pets.id as pet_id, pets.name").Joins("left join pets on pets.user_id = users.id").Where("users.name = ?", "joins_with_select").Scan(&results)
+	DB.Table("users").Columns("users.id, pets.id as pet_id, pets.name").Joins("left join pets on pets.user_id = users.id").Where("users.name = ?", "joins_with_select").Scan(&results)
 
 	sort.Slice(results, func(i, j int) bool {
 		return results[i].PetID > results[j].PetID

@@ -12,12 +12,12 @@ import (
 
 func TestUpsert(t *testing.T) {
 	lang := Language{Code: "upsert", Name: "Upsert"}
-	if err := DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&lang).Error; err != nil {
+	if err := DB.Clauses(clause.OnConflict{DoNothing: true}).Insert(&lang).Error; err != nil {
 		t.Fatalf("failed to upsert, got %v", err)
 	}
 
 	lang2 := Language{Code: "upsert", Name: "Upsert"}
-	if err := DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&lang2).Error; err != nil {
+	if err := DB.Clauses(clause.OnConflict{DoNothing: true}).Insert(&lang2).Error; err != nil {
 		t.Fatalf("failed to upsert, got %v", err)
 	}
 
@@ -32,7 +32,7 @@ func TestUpsert(t *testing.T) {
 	if err := DB.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "code"}},
 		DoUpdates: clause.Assignments(map[string]interface{}{"name": "upsert-new"}),
-	}).Create(&lang3).Error; err != nil {
+	}).Insert(&lang3).Error; err != nil {
 		t.Fatalf("failed to upsert, got %v", err)
 	}
 
@@ -45,7 +45,7 @@ func TestUpsert(t *testing.T) {
 	}
 
 	lang = Language{Code: "upsert", Name: "Upsert-Newname"}
-	if err := DB.Clauses(clause.OnConflict{UpdateAll: true}).Create(&lang).Error; err != nil {
+	if err := DB.Clauses(clause.OnConflict{UpdateAll: true}).Insert(&lang).Error; err != nil {
 		t.Fatalf("failed to upsert, got %v", err)
 	}
 
@@ -61,7 +61,7 @@ func TestUpsert(t *testing.T) {
 			Lang string `gorm:"<-:create"`
 		}
 
-		r := DB.Session(&gorm.Session{DryRun: true}).Clauses(clause.OnConflict{UpdateAll: true}).Create(&RestrictedLanguage{Code: "upsert_code", Name: "upsert_name", Lang: "upsert_lang"})
+		r := DB.Session(&gorm.Session{DryRun: true}).Clauses(clause.OnConflict{UpdateAll: true}).Insert(&RestrictedLanguage{Code: "upsert_code", Name: "upsert_name", Lang: "upsert_lang"})
 		if !regexp.MustCompile(`INTO .restricted_languages. .*\(.code.,.name.,.lang.\) .* (SET|UPDATE) .name.=.*.name.[^\w]*$`).MatchString(r.Statement.SQL.String()) {
 			t.Errorf("Table with escape character, got %v", r.Statement.SQL.String())
 		}
@@ -74,7 +74,7 @@ func TestUpsertSlice(t *testing.T) {
 		{Code: "upsert-slice2", Name: "Upsert-slice2"},
 		{Code: "upsert-slice3", Name: "Upsert-slice3"},
 	}
-	DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&langs)
+	DB.Clauses(clause.OnConflict{DoNothing: true}).Insert(&langs)
 
 	var langs2 []Language
 	if err := DB.Find(&langs2, "code LIKE ?", "upsert-slice%").Error; err != nil {
@@ -83,7 +83,7 @@ func TestUpsertSlice(t *testing.T) {
 		t.Errorf("should only find only 3 languages, but got %+v", langs2)
 	}
 
-	DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&langs)
+	DB.Clauses(clause.OnConflict{DoNothing: true}).Insert(&langs)
 	var langs3 []Language
 	if err := DB.Find(&langs3, "code LIKE ?", "upsert-slice%").Error; err != nil {
 		t.Errorf("no error should happen when find languages with code, but got %v", err)
@@ -99,7 +99,7 @@ func TestUpsertSlice(t *testing.T) {
 	if err := DB.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "code"}},
 		DoUpdates: clause.AssignmentColumns([]string{"name"}),
-	}).Create(&langs).Error; err != nil {
+	}).Insert(&langs).Error; err != nil {
 		t.Fatalf("failed to upsert, got %v", err)
 	}
 
@@ -121,7 +121,7 @@ func TestUpsertWithSave(t *testing.T) {
 		{Code: "upsert-save-2", Name: "Upsert-save-2"},
 	}
 
-	if err := DB.Save(&langs).Error; err != nil {
+	if err := DB.InsertOrUpdate(&langs).Error; err != nil {
 		t.Errorf("Failed to create, got error %v", err)
 	}
 
@@ -139,7 +139,7 @@ func TestUpsertWithSave(t *testing.T) {
 		langs[idx] = lang
 	}
 
-	if err := DB.Save(&langs).Error; err != nil {
+	if err := DB.InsertOrUpdate(&langs).Error; err != nil {
 		t.Errorf("Failed to upsert, got error %v", err)
 	}
 
@@ -153,7 +153,7 @@ func TestUpsertWithSave(t *testing.T) {
 	}
 
 	// lang := Language{Code: "upsert-save-3", Name: "Upsert-save-3"}
-	// if err := DB.Save(&lang).Error; err != nil {
+	// if err := DB.InsertOrUpdate(&lang).Error; err != nil {
 	// 	t.Errorf("Failed to create, got error %v", err)
 	// }
 
@@ -165,7 +165,7 @@ func TestUpsertWithSave(t *testing.T) {
 	// }
 
 	// lang.Name += "_new"
-	// if err := DB.Save(&lang).Error; err != nil {
+	// if err := DB.InsertOrUpdate(&lang).Error; err != nil {
 	// 	t.Errorf("Failed to create, got error %v", err)
 	// }
 
@@ -207,7 +207,7 @@ func TestFindOrInitialize(t *testing.T) {
 		t.Errorf("user should be initialized with search value and assign attrs")
 	}
 
-	DB.Save(&User{Name: "find or init", Age: 33})
+	DB.InsertOrUpdate(&User{Name: "find or init", Age: 33})
 	DB.Where(&User{Name: "find or init"}).Attrs("age", 44).FirstOrInit(&user5)
 	if user5.Name != "find or init" || user5.ID == 0 || user5.Age != 33 {
 		t.Errorf("user should be found and not initialized by Attrs")

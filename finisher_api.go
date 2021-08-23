@@ -13,8 +13,8 @@ import (
 	"gorm.io/gorm/utils"
 )
 
-// Create insert the value into database
-func (db *DB) Create(value interface{}) (tx *DB) {
+// Insert insert the value into database
+func (db *DB) Insert(value interface{}) (tx *DB) {
 	if db.CreateBatchSize > 0 {
 		return db.CreateInBatches(value, db.CreateBatchSize)
 	}
@@ -68,8 +68,8 @@ func (db *DB) CreateInBatches(value interface{}, batchSize int) (tx *DB) {
 	return
 }
 
-// Save update value in database, if the value doesn't have primary key, will insert it
-func (db *DB) Save(value interface{}) (tx *DB) {
+// InsertOrUpdate update value in database, if the value doesn't have primary key, will insert it
+func (db *DB) InsertOrUpdate(value interface{}) (tx *DB) {
 	tx = db.getInstance()
 	tx.Statement.Dest = value
 
@@ -102,7 +102,7 @@ func (db *DB) Save(value interface{}) (tx *DB) {
 		if tx.Error == nil && tx.RowsAffected == 0 && !tx.DryRun && !selectedUpdate {
 			result := reflect.New(tx.Statement.Schema.ModelType).Interface()
 			if err := tx.Session(&Session{}).First(result).Error; errors.Is(err, ErrRecordNotFound) {
-				return tx.Create(value)
+				return tx.Insert(value)
 			}
 		}
 	}
@@ -207,7 +207,7 @@ func (db *DB) FindInBatches(dest interface{}, batchSize int, fc func(tx *DB, bat
 	return tx
 }
 
-func (tx *DB) assignInterfacesToValue(values ...interface{}) {
+func (db *DB) assignInterfacesToValue(values ...interface{}) {
 	for _, value := range values {
 		switch v := value.(type) {
 		case []clause.Expression:
@@ -215,40 +215,40 @@ func (tx *DB) assignInterfacesToValue(values ...interface{}) {
 				if eq, ok := expr.(clause.Eq); ok {
 					switch column := eq.Column.(type) {
 					case string:
-						if field := tx.Statement.Schema.LookUpField(column); field != nil {
-							tx.AddError(field.Set(tx.Statement.ReflectValue, eq.Value))
+						if field := db.Statement.Schema.LookUpField(column); field != nil {
+							db.AddError(field.Set(db.Statement.ReflectValue, eq.Value))
 						}
 					case clause.Column:
-						if field := tx.Statement.Schema.LookUpField(column.Name); field != nil {
-							tx.AddError(field.Set(tx.Statement.ReflectValue, eq.Value))
+						if field := db.Statement.Schema.LookUpField(column.Name); field != nil {
+							db.AddError(field.Set(db.Statement.ReflectValue, eq.Value))
 						}
 					}
 				} else if andCond, ok := expr.(clause.AndConditions); ok {
-					tx.assignInterfacesToValue(andCond.Exprs)
+					db.assignInterfacesToValue(andCond.Exprs)
 				}
 			}
 		case clause.Expression, map[string]string, map[interface{}]interface{}, map[string]interface{}:
-			if exprs := tx.Statement.BuildCondition(value); len(exprs) > 0 {
-				tx.assignInterfacesToValue(exprs)
+			if exprs := db.Statement.BuildCondition(value); len(exprs) > 0 {
+				db.assignInterfacesToValue(exprs)
 			}
 		default:
-			if s, err := schema.Parse(value, tx.cacheStore, tx.NamingStrategy); err == nil {
+			if s, err := schema.Parse(value, db.cacheStore, db.NamingStrategy); err == nil {
 				reflectValue := reflect.Indirect(reflect.ValueOf(value))
 				switch reflectValue.Kind() {
 				case reflect.Struct:
 					for _, f := range s.Fields {
 						if f.Readable {
 							if v, isZero := f.ValueOf(reflectValue); !isZero {
-								if field := tx.Statement.Schema.LookUpField(f.Name); field != nil {
-									tx.AddError(field.Set(tx.Statement.ReflectValue, v))
+								if field := db.Statement.Schema.LookUpField(f.Name); field != nil {
+									db.AddError(field.Set(db.Statement.ReflectValue, v))
 								}
 							}
 						}
 					}
 				}
 			} else if len(values) > 0 {
-				if exprs := tx.Statement.BuildCondition(values[0], values[1:]...); len(exprs) > 0 {
-					tx.assignInterfacesToValue(exprs)
+				if exprs := db.Statement.BuildCondition(values[0], values[1:]...); len(exprs) > 0 {
+					db.assignInterfacesToValue(exprs)
 				}
 				return
 			}
@@ -303,7 +303,7 @@ func (db *DB) FirstOrCreate(dest interface{}, conds ...interface{}) (tx *DB) {
 			tx.assignInterfacesToValue(tx.Statement.assigns...)
 		}
 
-		return tx.Create(dest)
+		return tx.Insert(dest)
 	} else if len(db.Statement.assigns) > 0 {
 		exprs := tx.Statement.BuildCondition(db.Statement.assigns[0], db.Statement.assigns[1:]...)
 		assigns := map[string]interface{}{}

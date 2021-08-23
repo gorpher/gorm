@@ -22,10 +22,10 @@ func TestNonStdPrimaryKeyAndDefaultValues(t *testing.T) {
 	}
 
 	animal := Animal{Name: "Ferdinand"}
-	DB.Save(&animal)
+	DB.InsertOrUpdate(&animal)
 	updatedAt1 := animal.UpdatedAt
 
-	DB.Save(&animal).Update("name", "Francis")
+	DB.InsertOrUpdate(&animal).Update("name", "Francis")
 	if updatedAt1.Format(time.RFC3339Nano) == animal.UpdatedAt.Format(time.RFC3339Nano) {
 		t.Errorf("UpdatedAt should be updated")
 	}
@@ -36,8 +36,8 @@ func TestNonStdPrimaryKeyAndDefaultValues(t *testing.T) {
 		t.Error("RowsAffected should be correct when do batch update")
 	}
 
-	animal = Animal{From: "somewhere"}              // No name fields, should be filled with the default value (galeone)
-	DB.Save(&animal).Update("From", "a nice place") // The name field shoul be untouched
+	animal = Animal{From: "somewhere"}                        // No name fields, should be filled with the default value (galeone)
+	DB.InsertOrUpdate(&animal).Update("From", "a nice place") // The name field shoul be untouched
 	DB.First(&animal, animal.Counter)
 	if animal.Name != "galeone" {
 		t.Errorf("Name fields shouldn't be changed if untouched, but got %v", animal.Name)
@@ -45,7 +45,7 @@ func TestNonStdPrimaryKeyAndDefaultValues(t *testing.T) {
 
 	// When changing a field with a default value, the change must occur
 	animal.Name = "amazing horse"
-	DB.Save(&animal)
+	DB.InsertOrUpdate(&animal)
 	DB.First(&animal, animal.Counter)
 	if animal.Name != "amazing horse" {
 		t.Errorf("Update a filed with a default value should occur. But got %v\n", animal.Name)
@@ -53,7 +53,7 @@ func TestNonStdPrimaryKeyAndDefaultValues(t *testing.T) {
 
 	// When changing a field with a default value with blank value
 	animal.Name = ""
-	DB.Save(&animal)
+	DB.InsertOrUpdate(&animal)
 	DB.First(&animal, animal.Counter)
 	if animal.Name != "" {
 		t.Errorf("Update a filed to blank with a default value should occur. But got %v\n", animal.Name)

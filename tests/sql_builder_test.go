@@ -14,9 +14,9 @@ func TestRow(t *testing.T) {
 	user1 := User{Name: "RowUser1", Age: 1}
 	user2 := User{Name: "RowUser2", Age: 10}
 	user3 := User{Name: "RowUser3", Age: 20}
-	DB.Save(&user1).Save(&user2).Save(&user3)
+	DB.InsertOrUpdate(&user1).InsertOrUpdate(&user2).InsertOrUpdate(&user3)
 
-	row := DB.Table("users").Where("name = ?", user2.Name).Select("age").Row()
+	row := DB.Table("users").Where("name = ?", user2.Name).Columns("age").Row()
 
 	var age int64
 	if err := row.Scan(&age); err != nil {
@@ -34,7 +34,7 @@ func TestRow(t *testing.T) {
 
 	DB.Table(table).Where(map[string]interface{}{"name": user2.Name}).Update("age", 20)
 
-	row = DB.Table(table+" as u").Where("u.name = ?", user2.Name).Select("age").Row()
+	row = DB.Table(table+" as u").Where("u.name = ?", user2.Name).Columns("age").Row()
 	if err := row.Scan(&age); err != nil {
 		t.Fatalf("Failed to scan age, got %v", err)
 	}
@@ -48,9 +48,9 @@ func TestRows(t *testing.T) {
 	user1 := User{Name: "RowsUser1", Age: 1}
 	user2 := User{Name: "RowsUser2", Age: 10}
 	user3 := User{Name: "RowsUser3", Age: 20}
-	DB.Save(&user1).Save(&user2).Save(&user3)
+	DB.InsertOrUpdate(&user1).InsertOrUpdate(&user2).InsertOrUpdate(&user3)
 
-	rows, err := DB.Table("users").Where("name = ? or name = ?", user2.Name, user3.Name).Select("name, age").Rows()
+	rows, err := DB.Table("users").Where("name = ? or name = ?", user2.Name, user3.Name).Columns("name, age").Rows()
 	if err != nil {
 		t.Errorf("Not error should happen, got %v", err)
 	}
@@ -72,7 +72,7 @@ func TestRaw(t *testing.T) {
 	user1 := User{Name: "ExecRawSqlUser1", Age: 1}
 	user2 := User{Name: "ExecRawSqlUser2", Age: 10}
 	user3 := User{Name: "ExecRawSqlUser3", Age: 20}
-	DB.Save(&user1).Save(&user2).Save(&user3)
+	DB.InsertOrUpdate(&user1).InsertOrUpdate(&user2).InsertOrUpdate(&user3)
 
 	type result struct {
 		Name  string
@@ -117,9 +117,9 @@ func TestRowsWithGroup(t *testing.T) {
 		{Name: "having_user_1", Age: 30},
 	}
 
-	DB.Create(&users)
+	DB.Insert(&users)
 
-	rows, err := DB.Select("name, count(*) as total").Table("users").Group("name").Having("name IN ?", []string{users[0].Name, users[1].Name}).Rows()
+	rows, err := DB.Columns("name, count(*) as total").Table("users").Group("name").Having("name IN ?", []string{users[0].Name, users[1].Name}).Rows()
 	if err != nil {
 		t.Fatalf("got error %v", err)
 	}
@@ -144,7 +144,7 @@ func TestQueryRaw(t *testing.T) {
 		GetUser("row_query_user", Config{}),
 		GetUser("row_query_user", Config{}),
 	}
-	DB.Create(&users)
+	DB.Insert(&users)
 
 	var user User
 	DB.Raw("select * from users WHERE id = ?", users[1].ID).First(&user)
@@ -156,7 +156,7 @@ func TestDryRun(t *testing.T) {
 
 	dryRunDB := DB.Session(&gorm.Session{DryRun: true})
 
-	stmt := dryRunDB.Create(&user).Statement
+	stmt := dryRunDB.Insert(&user).Statement
 	if stmt.SQL.String() == "" || len(stmt.Vars) != 9 {
 		t.Errorf("Failed to generate sql, got %v", stmt.SQL.String())
 	}

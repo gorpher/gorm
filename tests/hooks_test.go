@@ -97,7 +97,7 @@ func TestRunCallbacks(t *testing.T) {
 	DB.AutoMigrate(&Product{})
 
 	p := Product{Code: "unique_code", Price: 100}
-	DB.Save(&p)
+	DB.InsertOrUpdate(&p)
 
 	if !reflect.DeepEqual(p.GetCallTimes(), []int64{1, 1, 0, 1, 1, 0, 0, 0, 0}) {
 		t.Fatalf("Callbacks should be invoked successfully, %v", p.GetCallTimes())
@@ -109,7 +109,7 @@ func TestRunCallbacks(t *testing.T) {
 	}
 
 	p.Price = 200
-	DB.Save(&p)
+	DB.InsertOrUpdate(&p)
 	if !reflect.DeepEqual(p.GetCallTimes(), []int64{1, 2, 1, 1, 1, 1, 0, 0, 1}) {
 		t.Fatalf("After update callbacks should be invoked successfully, %v", p.GetCallTimes())
 	}
@@ -149,7 +149,7 @@ func TestCallbacksWithErrors(t *testing.T) {
 	DB.AutoMigrate(&Product{})
 
 	p := Product{Code: "Invalid", Price: 100}
-	if DB.Save(&p).Error == nil {
+	if DB.InsertOrUpdate(&p).Error == nil {
 		t.Fatalf("An error from before create callbacks happened when create with invalid value")
 	}
 
@@ -157,15 +157,15 @@ func TestCallbacksWithErrors(t *testing.T) {
 		t.Fatalf("Should not save record that have errors")
 	}
 
-	if DB.Save(&Product{Code: "dont_save", Price: 100}).Error == nil {
+	if DB.InsertOrUpdate(&Product{Code: "dont_save", Price: 100}).Error == nil {
 		t.Fatalf("An error from after create callbacks happened when create with invalid value")
 	}
 
 	p2 := Product{Code: "update_callback", Price: 100}
-	DB.Save(&p2)
+	DB.InsertOrUpdate(&p2)
 
 	p2.Code = "dont_update"
-	if DB.Save(&p2).Error == nil {
+	if DB.InsertOrUpdate(&p2).Error == nil {
 		t.Fatalf("An error from before update callbacks happened when update with invalid value")
 	}
 
@@ -178,12 +178,12 @@ func TestCallbacksWithErrors(t *testing.T) {
 	}
 
 	p2.Code = "dont_save"
-	if DB.Save(&p2).Error == nil {
+	if DB.InsertOrUpdate(&p2).Error == nil {
 		t.Fatalf("An error from before save callbacks happened when update with invalid value")
 	}
 
 	p3 := Product{Code: "dont_delete", Price: 100}
-	DB.Save(&p3)
+	DB.InsertOrUpdate(&p3)
 	if DB.Delete(&p3).Error == nil {
 		t.Fatalf("An error from before delete callbacks happened when delete")
 	}
@@ -193,13 +193,13 @@ func TestCallbacksWithErrors(t *testing.T) {
 	}
 
 	p4 := Product{Code: "after_save_error", Price: 100}
-	DB.Save(&p4)
+	DB.InsertOrUpdate(&p4)
 	if err := DB.First(&Product{}, "code = ?", "after_save_error").Error; err == nil {
 		t.Fatalf("Record should be reverted if get an error in after save callback")
 	}
 
 	p5 := Product{Code: "after_delete_error", Price: 100}
-	DB.Save(&p5)
+	DB.InsertOrUpdate(&p5)
 	if err := DB.First(&Product{}, "code = ?", "after_delete_error").Error; err != nil {
 		t.Fatalf("Record should be found")
 	}
@@ -223,7 +223,7 @@ func (s Product2) BeforeCreate(tx *gorm.DB) (err error) {
 		newProduft := s
 		newProduft.Price *= 2
 		newProduft.Name += "_clone"
-		err = tx.Create(&newProduft).Error
+		err = tx.Insert(&newProduft).Error
 	}
 
 	if s.Name == "Invalid" {
@@ -244,13 +244,13 @@ func TestUseDBInHooks(t *testing.T) {
 
 	product := Product2{Name: "Invalid", Price: 100}
 
-	if err := DB.Create(&product).Error; err == nil {
+	if err := DB.Insert(&product).Error; err == nil {
 		t.Fatalf("should returns error %v when creating product, but got nil", err)
 	}
 
 	product2 := Product2{Name: "Nice", Price: 100}
 
-	if err := DB.Create(&product2).Error; err != nil {
+	if err := DB.Insert(&product2).Error; err != nil {
 		t.Fatalf("Failed to create product, got error: %v", err)
 	}
 
@@ -277,7 +277,7 @@ func TestUseDBInHooks(t *testing.T) {
 	}
 
 	product3 := Product2{Name: "Nice2", Price: 600, Owner: "admin"}
-	if err := DB.Create(&product3).Error; err != nil {
+	if err := DB.Insert(&product3).Error; err != nil {
 		t.Fatalf("Failed to create product, got error: %v", err)
 	}
 
@@ -325,13 +325,13 @@ func TestSetColumn(t *testing.T) {
 	DB.AutoMigrate(&Product3{})
 
 	product := Product3{Name: "Product", Price: 0}
-	DB.Create(&product)
+	DB.Insert(&product)
 
 	if product.Price != 100 {
 		t.Errorf("invalid price after create, got %+v", product)
 	}
 
-	DB.Model(&product).Select("code", "price").Updates(map[string]interface{}{"code": "L1212"})
+	DB.Model(&product).Columns("code", "price").Updates(map[string]interface{}{"code": "L1212"})
 
 	if product.Price != 150 || product.Code != "L1212" {
 		t.Errorf("invalid data after update, got %+v", product)
@@ -345,14 +345,14 @@ func TestSetColumn(t *testing.T) {
 	}
 
 	// Code changed, but not selected, price should not change
-	DB.Model(&product).Select("Name", "Price").Updates(map[string]interface{}{"Name": "Product New2", "code": "L1213"})
+	DB.Model(&product).Columns("Name", "Price").Updates(map[string]interface{}{"Name": "Product New2", "code": "L1213"})
 
 	if product.Name != "Product New2" || product.Price != 170 || product.Code != "L1212" {
 		t.Errorf("invalid data after update, got %+v", product)
 	}
 
 	// Code changed, price should changed
-	DB.Model(&product).Select("Name", "Code", "Price").Updates(map[string]interface{}{"Name": "Product New3", "code": "L1213"})
+	DB.Model(&product).Columns("Name", "Code", "Price").Updates(map[string]interface{}{"Name": "Product New3", "code": "L1213"})
 
 	if product.Name != "Product New3" || product.Price != 220 || product.Code != "L1213" {
 		t.Errorf("invalid data after update, got %+v", product)
@@ -363,8 +363,8 @@ func TestSetColumn(t *testing.T) {
 
 	AssertEqual(t, result, product)
 
-	// Select to change Code, but nothing updated, price should not change
-	DB.Model(&product).Select("code").Updates(Product3{Name: "L1214", Code: "L1213"})
+	// Columns to change Code, but nothing updated, price should not change
+	DB.Model(&product).Columns("code").Updates(Product3{Name: "L1214", Code: "L1213"})
 
 	if product.Price != 220 || product.Code != "L1213" || product.Name != "Product New3" {
 		t.Errorf("invalid data after update, got %+v", product)
@@ -391,7 +391,7 @@ func TestSetColumn(t *testing.T) {
 	AssertEqual(t, result2, product)
 
 	product2 := Product3{Name: "Product", Price: 0}
-	DB.Session(&gorm.Session{SkipHooks: true}).Create(&product2)
+	DB.Session(&gorm.Session{SkipHooks: true}).Insert(&product2)
 
 	if product2.Price != 0 {
 		t.Errorf("invalid price after create without hooks, got %+v", product2)
@@ -408,7 +408,7 @@ func TestHooksForSlice(t *testing.T) {
 		{Name: "Product-3", Price: 300},
 	}
 
-	DB.Create(&products)
+	DB.Insert(&products)
 
 	for idx, value := range []int64{200, 300, 400} {
 		if products[idx].Price != value {
@@ -431,7 +431,7 @@ func TestHooksForSlice(t *testing.T) {
 		{Name: "Product-3", Price: 300},
 	}
 
-	DB.Create(&products2)
+	DB.Insert(&products2)
 
 	for idx, value := range []int64{200, 300, 400} {
 		if products2[idx].Price != value {
@@ -476,7 +476,7 @@ func TestFailedToSaveAssociationShouldRollback(t *testing.T) {
 	DB.AutoMigrate(&Product4{}, &ProductItem{})
 
 	product := Product4{Name: "Product-1", Price: 100, Item: ProductItem{Code: "invalid"}}
-	if err := DB.Create(&product).Error; err == nil {
+	if err := DB.Insert(&product).Error; err == nil {
 		t.Errorf("should got failed to save, but error is nil")
 	}
 
@@ -485,7 +485,7 @@ func TestFailedToSaveAssociationShouldRollback(t *testing.T) {
 	}
 
 	product = Product4{Name: "Product-2", Price: 100, Item: ProductItem{Code: "valid"}}
-	if err := DB.Create(&product).Error; err != nil {
+	if err := DB.Insert(&product).Error; err != nil {
 		t.Errorf("should create product, but got error %v", err)
 	}
 

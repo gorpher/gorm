@@ -29,7 +29,7 @@ func TestScopes(t *testing.T) {
 		GetUser("ScopeUser3", Config{}),
 	}
 
-	DB.Create(&users)
+	DB.Insert(&users)
 
 	var users1, users2, users3 []User
 	DB.Scopes(NameIn1And2).Find(&users1)
@@ -68,7 +68,7 @@ func TestScopes(t *testing.T) {
 	userTable := func(db *gorm.DB) *gorm.DB {
 		return db.WithContext(context.Background()).Table("users")
 	}
-	if err := DB.Scopes(userTable).Select("max(id)").Scan(&maxId).Error; err != nil {
+	if err := DB.Scopes(userTable).Columns("max(id)").Scan(&maxId).Error; err != nil {
 		t.Errorf("select max(id)")
 	}
 }

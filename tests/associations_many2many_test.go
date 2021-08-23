@@ -9,7 +9,7 @@ import (
 func TestMany2ManyAssociation(t *testing.T) {
 	var user = *GetUser("many2many", Config{Languages: 2})
 
-	if err := DB.Create(&user).Error; err != nil {
+	if err := DB.Insert(&user).Error; err != nil {
 		t.Fatalf("errors happened when create: %v", err)
 	}
 
@@ -27,7 +27,7 @@ func TestMany2ManyAssociation(t *testing.T) {
 
 	// Append
 	var language = Language{Code: "language-many2many-append", Name: "language-many2many-append"}
-	DB.Create(&language)
+	DB.Insert(&language)
 
 	if err := DB.Model(&user2).Association("Languages").Append(&language); err != nil {
 		t.Fatalf("Error happened when append account, got %v", err)
@@ -42,7 +42,7 @@ func TestMany2ManyAssociation(t *testing.T) {
 		{Code: "language-many2many-append-1-1", Name: "language-many2many-append-1-1"},
 		{Code: "language-many2many-append-2-1", Name: "language-many2many-append-2-1"},
 	}
-	DB.Create(&languages)
+	DB.Insert(&languages)
 
 	if err := DB.Model(&user2).Association("Languages").Append(&languages); err != nil {
 		t.Fatalf("Error happened when append language, got %v", err)
@@ -56,7 +56,7 @@ func TestMany2ManyAssociation(t *testing.T) {
 
 	// Replace
 	var language2 = Language{Code: "language-many2many-replace", Name: "language-many2many-replace"}
-	DB.Create(&language2)
+	DB.Insert(&language2)
 
 	if err := DB.Model(&user2).Association("Languages").Replace(&language2); err != nil {
 		t.Fatalf("Error happened when append language, got %v", err)
@@ -96,15 +96,15 @@ func TestMany2ManyAssociation(t *testing.T) {
 func TestMany2ManyOmitAssociations(t *testing.T) {
 	var user = *GetUser("many2many_omit_associations", Config{Languages: 2})
 
-	if err := DB.Omit("Languages.*").Create(&user).Error; err == nil {
+	if err := DB.Omit("Languages.*").Insert(&user).Error; err == nil {
 		t.Fatalf("should raise error when create users without languages reference")
 	}
 
-	if err := DB.Create(&user.Languages).Error; err != nil {
+	if err := DB.Insert(&user.Languages).Error; err != nil {
 		t.Fatalf("no error should happen when create languages, but got %v", err)
 	}
 
-	if err := DB.Omit("Languages.*").Create(&user).Error; err != nil {
+	if err := DB.Omit("Languages.*").Insert(&user).Error; err != nil {
 		t.Fatalf("no error should happen when create user when languages exists, but got %v", err)
 	}
 
@@ -127,7 +127,7 @@ func TestMany2ManyAssociationForSlice(t *testing.T) {
 		*GetUser("slice-many2many-3", Config{Languages: 4}),
 	}
 
-	DB.Create(&users)
+	DB.Insert(&users)
 
 	// Count
 	AssertAssociationCount(t, users, "Languages", 6, "")
@@ -147,8 +147,8 @@ func TestMany2ManyAssociationForSlice(t *testing.T) {
 		{Code: "language-many2many-append-3-1", Name: "language-many2many-append-3-1"},
 		{Code: "language-many2many-append-3-2", Name: "language-many2many-append-3-2"},
 	}
-	DB.Create(&languages1)
-	DB.Create(&languages3)
+	DB.Insert(&languages1)
+	DB.Insert(&languages3)
 
 	DB.Model(&users).Association("Languages").Append(&languages1, &languages2, &languages3)
 
@@ -163,9 +163,9 @@ func TestMany2ManyAssociationForSlice(t *testing.T) {
 		{Code: "language-slice-replace-2-2", Name: "language-slice-replace-2-2"},
 	}
 	languages2_3 := &Language{Code: "language-slice-replace-3", Name: "language-slice-replace-3"}
-	DB.Create(&languages2_1)
-	DB.Create(&languages2_2)
-	DB.Create(&languages2_3)
+	DB.Insert(&languages2_1)
+	DB.Insert(&languages2_2)
+	DB.Insert(&languages2_3)
 
 	// Replace
 	DB.Model(&users).Association("Languages").Replace(&languages2_1, &languages2_2, languages2_3)
@@ -193,7 +193,7 @@ func TestMany2ManyAssociationForSlice(t *testing.T) {
 func TestSingleTableMany2ManyAssociation(t *testing.T) {
 	var user = *GetUser("many2many", Config{Friends: 2})
 
-	if err := DB.Create(&user).Error; err != nil {
+	if err := DB.Insert(&user).Error; err != nil {
 		t.Fatalf("errors happened when create: %v", err)
 	}
 
@@ -278,7 +278,7 @@ func TestSingleTableMany2ManyAssociationForSlice(t *testing.T) {
 		*GetUser("slice-many2many-3", Config{Team: 4}),
 	}
 
-	DB.Create(&users)
+	DB.Insert(&users)
 
 	// Count
 	AssertAssociationCount(t, users, "Team", 6, "")

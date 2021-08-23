@@ -9,7 +9,7 @@ import (
 func TestHasManyAssociation(t *testing.T) {
 	var user = *GetUser("hasmany", Config{Pets: 2})
 
-	if err := DB.Create(&user).Error; err != nil {
+	if err := DB.Insert(&user).Error; err != nil {
 		t.Fatalf("errors happened when create: %v", err)
 	}
 
@@ -121,7 +121,7 @@ func TestHasManyAssociation(t *testing.T) {
 func TestSingleTableHasManyAssociation(t *testing.T) {
 	var user = *GetUser("hasmany", Config{Team: 2})
 
-	if err := DB.Create(&user).Error; err != nil {
+	if err := DB.Insert(&user).Error; err != nil {
 		t.Fatalf("errors happened when create: %v", err)
 	}
 
@@ -220,7 +220,7 @@ func TestHasManyAssociationForSlice(t *testing.T) {
 		*GetUser("slice-hasmany-3", Config{Pets: 4}),
 	}
 
-	DB.Create(&users)
+	DB.Insert(&users)
 
 	// Count
 	AssertAssociationCount(t, users, "Pets", 6, "")
@@ -274,7 +274,7 @@ func TestSingleTableHasManyAssociationForSlice(t *testing.T) {
 		*GetUser("slice-hasmany-3", Config{Team: 4}),
 	}
 
-	if err := DB.Create(&users).Error; err != nil {
+	if err := DB.Insert(&users).Error; err != nil {
 		t.Fatalf("errors happened when create: %v", err)
 	}
 
@@ -326,7 +326,7 @@ func TestSingleTableHasManyAssociationForSlice(t *testing.T) {
 func TestPolymorphicHasManyAssociation(t *testing.T) {
 	var user = *GetUser("hasmany", Config{Toys: 2})
 
-	if err := DB.Create(&user).Error; err != nil {
+	if err := DB.Insert(&user).Error; err != nil {
 		t.Fatalf("errors happened when create: %v", err)
 	}
 
@@ -425,7 +425,7 @@ func TestPolymorphicHasManyAssociationForSlice(t *testing.T) {
 		*GetUser("slice-hasmany-3", Config{Toys: 4}),
 	}
 
-	DB.Create(&users)
+	DB.Insert(&users)
 
 	// Count
 	AssertAssociationCount(t, users, "Toys", 6, "")

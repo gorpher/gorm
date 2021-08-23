@@ -408,7 +408,7 @@ func (association *Association) saveAssociation(clear bool, values ...interface{
 
 	associationDB := association.DB.Session(&Session{}).Model(nil)
 	if !association.DB.FullSaveAssociations {
-		associationDB.Select(selectedSaveColumns)
+		associationDB.Columns(selectedSaveColumns)
 	}
 	if len(omitColumns) > 0 {
 		associationDB.Omit(omitColumns...)

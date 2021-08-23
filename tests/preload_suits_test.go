@@ -40,7 +40,7 @@ func TestNestedPreload1(t *testing.T) {
 	}
 
 	want := Level3{Level2: Level2{Level1: Level1{Value: "value"}}}
-	if err := DB.Create(&want).Error; err != nil {
+	if err := DB.Insert(&want).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -96,7 +96,7 @@ func TestNestedPreload2(t *testing.T) {
 			},
 		},
 	}
-	if err := DB.Create(&want).Error; err != nil {
+	if err := DB.Insert(&want).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -139,7 +139,7 @@ func TestNestedPreload3(t *testing.T) {
 			{Level1: Level1{Value: "value2"}},
 		},
 	}
-	if err := DB.Create(&want).Error; err != nil {
+	if err := DB.Insert(&want).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -184,7 +184,7 @@ func TestNestedPreload4(t *testing.T) {
 			},
 		},
 	}
-	if err := DB.Create(&want).Error; err != nil {
+	if err := DB.Insert(&want).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -224,11 +224,11 @@ func TestNestedPreload5(t *testing.T) {
 
 	want := make([]Level3, 2)
 	want[0] = Level3{Level2: Level2{Level1: Level1{Value: "value"}}}
-	if err := DB.Create(&want[0]).Error; err != nil {
+	if err := DB.Insert(&want[0]).Error; err != nil {
 		t.Error(err)
 	}
 	want[1] = Level3{Level2: Level2{Level1: Level1{Value: "value2"}}}
-	if err := DB.Create(&want[1]).Error; err != nil {
+	if err := DB.Insert(&want[1]).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -281,7 +281,7 @@ func TestNestedPreload6(t *testing.T) {
 			},
 		},
 	}
-	if err := DB.Create(&want[0]).Error; err != nil {
+	if err := DB.Insert(&want[0]).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -300,7 +300,7 @@ func TestNestedPreload6(t *testing.T) {
 			},
 		},
 	}
-	if err := DB.Create(&want[1]).Error; err != nil {
+	if err := DB.Insert(&want[1]).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -344,7 +344,7 @@ func TestNestedPreload7(t *testing.T) {
 			{Level1: Level1{Value: "value2"}},
 		},
 	}
-	if err := DB.Create(&want[0]).Error; err != nil {
+	if err := DB.Insert(&want[0]).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -354,7 +354,7 @@ func TestNestedPreload7(t *testing.T) {
 			{Level1: Level1{Value: "value4"}},
 		},
 	}
-	if err := DB.Create(&want[1]).Error; err != nil {
+	if err := DB.Insert(&want[1]).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -400,7 +400,7 @@ func TestNestedPreload8(t *testing.T) {
 			},
 		},
 	}
-	if err := DB.Create(&want[0]).Error; err != nil {
+	if err := DB.Insert(&want[0]).Error; err != nil {
 		t.Error(err)
 	}
 	want[1] = Level3{
@@ -411,7 +411,7 @@ func TestNestedPreload8(t *testing.T) {
 			},
 		},
 	}
-	if err := DB.Create(&want[1]).Error; err != nil {
+	if err := DB.Insert(&want[1]).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -482,7 +482,7 @@ func TestNestedPreload9(t *testing.T) {
 			},
 		},
 	}
-	if err := DB.Create(&want[0]).Error; err != nil {
+	if err := DB.Insert(&want[0]).Error; err != nil {
 		t.Error(err)
 	}
 	want[1] = Level3{
@@ -505,7 +505,7 @@ func TestNestedPreload9(t *testing.T) {
 			},
 		},
 	}
-	if err := DB.Create(&want[1]).Error; err != nil {
+	if err := DB.Insert(&want[1]).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -546,7 +546,7 @@ func TestNestedPreload10(t *testing.T) {
 	}
 
 	levelA1 := &LevelA1{Value: "foo"}
-	if err := DB.Save(levelA1).Error; err != nil {
+	if err := DB.InsertOrUpdate(levelA1).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -566,7 +566,7 @@ func TestNestedPreload10(t *testing.T) {
 		},
 	}
 	for _, levelA2 := range want {
-		if err := DB.Save(levelA2).Error; err != nil {
+		if err := DB.InsertOrUpdate(levelA2).Error; err != nil {
 			t.Error(err)
 		}
 	}
@@ -607,7 +607,7 @@ func TestNestedPreload11(t *testing.T) {
 	}
 
 	levelB1 := &LevelB1{Value: "foo"}
-	if err := DB.Create(levelB1).Error; err != nil {
+	if err := DB.Insert(levelB1).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -616,7 +616,7 @@ func TestNestedPreload11(t *testing.T) {
 		LevelB1ID: sql.NullInt64{Valid: true, Int64: int64(levelB1.ID)},
 		LevelB2s:  []*LevelB2{},
 	}
-	if err := DB.Create(levelB3).Error; err != nil {
+	if err := DB.Insert(levelB3).Error; err != nil {
 		t.Error(err)
 	}
 	levelB1.LevelB3s = []*LevelB3{levelB3}
@@ -663,7 +663,7 @@ func TestNestedPreload12(t *testing.T) {
 			Value: "c1",
 		},
 	}
-	DB.Create(&level2)
+	DB.Insert(&level2)
 
 	want := []LevelC3{
 		{
@@ -676,7 +676,7 @@ func TestNestedPreload12(t *testing.T) {
 	}
 
 	for i := range want {
-		if err := DB.Create(&want[i]).Error; err != nil {
+		if err := DB.Insert(&want[i]).Error; err != nil {
 			t.Error(err)
 		}
 	}
@@ -721,7 +721,7 @@ func TestManyToManyPreloadWithMultiPrimaryKeys(t *testing.T) {
 		{Value: "ru", LanguageCode: "ru"},
 		{Value: "en", LanguageCode: "en"},
 	}}
-	if err := DB.Save(&want).Error; err != nil {
+	if err := DB.InsertOrUpdate(&want).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -729,7 +729,7 @@ func TestManyToManyPreloadWithMultiPrimaryKeys(t *testing.T) {
 		{Value: "zh", LanguageCode: "zh"},
 		{Value: "de", LanguageCode: "de"},
 	}}
-	if err := DB.Save(&want2).Error; err != nil {
+	if err := DB.InsertOrUpdate(&want2).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -817,7 +817,7 @@ func TestManyToManyPreloadForNestedPointer(t *testing.T) {
 			},
 		},
 	}
-	if err := DB.Save(&want).Error; err != nil {
+	if err := DB.InsertOrUpdate(&want).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -831,7 +831,7 @@ func TestManyToManyPreloadForNestedPointer(t *testing.T) {
 			},
 		},
 	}
-	if err := DB.Save(&want2).Error; err != nil {
+	if err := DB.InsertOrUpdate(&want2).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -925,7 +925,7 @@ func TestNestedManyToManyPreload(t *testing.T) {
 		},
 	}
 
-	if err := DB.Save(&want).Error; err != nil {
+	if err := DB.InsertOrUpdate(&want).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -980,7 +980,7 @@ func TestNestedManyToManyPreload2(t *testing.T) {
 		},
 	}
 
-	if err := DB.Save(&want).Error; err != nil {
+	if err := DB.InsertOrUpdate(&want).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -1053,7 +1053,7 @@ func TestNestedManyToManyPreload3(t *testing.T) {
 	}
 
 	for _, want := range wants {
-		if err := DB.Save(want).Error; err != nil {
+		if err := DB.InsertOrUpdate(want).Error; err != nil {
 			t.Error(err)
 		}
 	}
@@ -1126,7 +1126,7 @@ func TestNestedManyToManyPreload3ForStruct(t *testing.T) {
 	}
 
 	for _, want := range wants {
-		if err := DB.Save(want).Error; err != nil {
+		if err := DB.InsertOrUpdate(want).Error; err != nil {
 			t.Error(err)
 		}
 	}
@@ -1187,7 +1187,7 @@ func TestNestedManyToManyPreload4(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := DB.Save(&dummy).Error; err != nil {
+	if err := DB.InsertOrUpdate(&dummy).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -1220,7 +1220,7 @@ func TestManyToManyPreloadForPointer(t *testing.T) {
 		{Value: "ru"},
 		{Value: "en"},
 	}}
-	if err := DB.Save(&want).Error; err != nil {
+	if err := DB.InsertOrUpdate(&want).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -1228,7 +1228,7 @@ func TestManyToManyPreloadForPointer(t *testing.T) {
 		{Value: "zh"},
 		{Value: "de"},
 	}}
-	if err := DB.Save(&want2).Error; err != nil {
+	if err := DB.InsertOrUpdate(&want2).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -1313,7 +1313,7 @@ func TestNilPointerSlice(t *testing.T) {
 			},
 		},
 	}
-	if err := DB.Save(&want).Error; err != nil {
+	if err := DB.InsertOrUpdate(&want).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -1321,7 +1321,7 @@ func TestNilPointerSlice(t *testing.T) {
 		Value:  "Tom",
 		Level2: nil,
 	}
-	if err := DB.Save(&want2).Error; err != nil {
+	if err := DB.InsertOrUpdate(&want2).Error; err != nil {
 		t.Fatalf("Got error %v", err)
 	}
 
@@ -1371,7 +1371,7 @@ func TestNilPointerSlice2(t *testing.T) {
 	}
 
 	want := new(Level1)
-	if err := DB.Save(want).Error; err != nil {
+	if err := DB.InsertOrUpdate(want).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -1419,16 +1419,16 @@ func TestPrefixedPreloadDuplication(t *testing.T) {
 	}
 
 	lvl := &Level3{}
-	if err := DB.Save(lvl).Error; err != nil {
+	if err := DB.InsertOrUpdate(lvl).Error; err != nil {
 		t.Error(err)
 	}
 
 	sublvl1 := &Level4{Level3ID: lvl.ID}
-	if err := DB.Save(sublvl1).Error; err != nil {
+	if err := DB.InsertOrUpdate(sublvl1).Error; err != nil {
 		t.Error(err)
 	}
 	sublvl2 := &Level4{Level3ID: lvl.ID}
-	if err := DB.Save(sublvl2).Error; err != nil {
+	if err := DB.InsertOrUpdate(sublvl2).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -1439,7 +1439,7 @@ func TestPrefixedPreloadDuplication(t *testing.T) {
 			Level3: lvl,
 		},
 	}
-	if err := DB.Save(&want1).Error; err != nil {
+	if err := DB.InsertOrUpdate(&want1).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -1448,7 +1448,7 @@ func TestPrefixedPreloadDuplication(t *testing.T) {
 			Level3: lvl,
 		},
 	}
-	if err := DB.Save(&want2).Error; err != nil {
+	if err := DB.InsertOrUpdate(&want2).Error; err != nil {
 		t.Error(err)
 	}
 
@@ -1496,7 +1496,7 @@ func TestPreloadManyToManyCallbacks(t *testing.T) {
 			{Name: "l2-1"}, {Name: "l2-2"},
 		},
 	}
-	DB.Save(&lvl)
+	DB.InsertOrUpdate(&lvl)
 
 	var called int64
 	DB.Callback().Query().After("gorm:query").Register("TestPreloadManyToManyCallbacks", func(_ *gorm.DB) {

@@ -22,7 +22,7 @@ func TestCustomizeColumn(t *testing.T) {
 	now := time.Now()
 	cc := CustomizeColumn{ID: 666, Name: expected, Date: &now}
 
-	if count := DB.Create(&cc).RowsAffected; count != 1 {
+	if count := DB.Insert(&cc).RowsAffected; count != 1 {
 		t.Error("There should be one record be affected when create record")
 	}
 
@@ -34,7 +34,7 @@ func TestCustomizeColumn(t *testing.T) {
 	}
 
 	cc.Name = "bar"
-	DB.Save(&cc)
+	DB.InsertOrUpdate(&cc)
 
 	var cc2 CustomizeColumn
 	DB.First(&cc2, "mapped_id = ?", 666)
@@ -105,7 +105,7 @@ func TestCustomizeField(t *testing.T) {
 	}
 
 	create := generateStruct("create")
-	DB.Create(&create)
+	DB.Insert(&create)
 
 	var result CustomizeFieldStruct
 	DB.Find(&result, "name = ?", "create")
@@ -131,7 +131,7 @@ func TestCustomizeField(t *testing.T) {
 	result.FieldAllowUpdate = "field_allow_update_updated"
 	result.FieldReadonly = "field_readonly_updated"
 	result.FieldIgnore = "field_ignore_updated"
-	DB.Save(&result)
+	DB.InsertOrUpdate(&result)
 
 	var result2 CustomizeFieldStruct
 	DB.Find(&result2, "name = ?", "create")
@@ -173,7 +173,7 @@ func TestCustomizeField(t *testing.T) {
 	createWithDefaultTime.AutoUnixMilliUpdateTime = 100
 	createWithDefaultTime.AutoUnixNanoCreateTime = 100
 	createWithDefaultTime.AutoUnixNanoUpdateTime = 100
-	DB.Create(&createWithDefaultTime)
+	DB.Insert(&createWithDefaultTime)
 
 	var createWithDefaultTimeResult CustomizeFieldStruct
 	DB.Find(&createWithDefaultTimeResult, "name = ?", createWithDefaultTime.Name)

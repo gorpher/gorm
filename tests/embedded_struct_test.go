@@ -65,8 +65,8 @@ func TestEmbeddedStruct(t *testing.T) {
 	}
 
 	// save embedded struct
-	DB.Save(&HNPost{BasePost: BasePost{Title: "news"}})
-	DB.Save(&HNPost{BasePost: BasePost{Title: "hn_news"}})
+	DB.InsertOrUpdate(&HNPost{BasePost: BasePost{Title: "news"}})
+	DB.InsertOrUpdate(&HNPost{BasePost: BasePost{Title: "hn_news"}})
 	var news HNPost
 	if err := DB.First(&news, "title = ?", "hn_news").Error; err != nil {
 		t.Errorf("no error should happen when query with embedded struct, but got %v", err)
@@ -74,7 +74,7 @@ func TestEmbeddedStruct(t *testing.T) {
 		t.Errorf("embedded struct's value should be scanned correctly")
 	}
 
-	DB.Save(&EngadgetPost{BasePost: BasePost{Title: "engadget_news"}})
+	DB.InsertOrUpdate(&EngadgetPost{BasePost: BasePost{Title: "engadget_news"}})
 	var egNews EngadgetPost
 	if err := DB.First(&egNews, "title = ?", "engadget_news").Error; err != nil {
 		t.Errorf("no error should happen when query with embedded struct, but got %v", err)
@@ -100,7 +100,7 @@ func TestEmbeddedPointerTypeStruct(t *testing.T) {
 		t.Fatalf("failed to auto migrate, got error: %v", err)
 	}
 
-	DB.Create(&HNPost{BasePost: &BasePost{Title: "embedded_pointer_type"}})
+	DB.Insert(&HNPost{BasePost: &BasePost{Title: "embedded_pointer_type"}})
 
 	var hnPost HNPost
 	if err := DB.First(&hnPost, "title = ?", "embedded_pointer_type").Error; err != nil {
@@ -149,7 +149,7 @@ func TestEmbeddedScanValuer(t *testing.T) {
 
 	hnPost := HNPost{Content: Content{Content: "hello world"}}
 
-	if err := DB.Create(&hnPost).Error; err != nil {
+	if err := DB.Insert(&hnPost).Error; err != nil {
 		t.Errorf("Failed to create got error %v", err)
 	}
 }

@@ -22,7 +22,7 @@ func TestPreparedStmt(t *testing.T) {
 
 	user := *GetUser("prepared_stmt", Config{})
 
-	txCtx.Create(&user)
+	txCtx.Insert(&user)
 
 	var result1 User
 	if err := txCtx.Find(&result1, user.ID).Error; err != nil {
@@ -37,11 +37,11 @@ func TestPreparedStmt(t *testing.T) {
 	}
 
 	user2 := *GetUser("prepared_stmt2", Config{})
-	if err := txCtx.Create(&user2).Error; err == nil {
+	if err := txCtx.Insert(&user2).Error; err == nil {
 		t.Fatalf("should failed to create with timeout context")
 	}
 
-	if err := tx.Create(&user2).Error; err != nil {
+	if err := tx.Insert(&user2).Error; err != nil {
 		t.Fatalf("failed to create, got error %v", err)
 	}
 
@@ -69,7 +69,7 @@ func TestPreparedStmtFromTransaction(t *testing.T) {
 		t.Errorf("Failed to run one transaction, got error %v\n", err)
 	}
 
-	if err := tx.Create(&User{Name: "zzjin"}).Error; err != nil {
+	if err := tx.Insert(&User{Name: "zzjin"}).Error; err != nil {
 		tx.Rollback()
 		t.Errorf("Failed to run one transaction, got error %v\n", err)
 	}

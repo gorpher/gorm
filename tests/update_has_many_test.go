@@ -10,12 +10,12 @@ import (
 func TestUpdateHasManyAssociations(t *testing.T) {
 	var user = *GetUser("update-has-many", Config{})
 
-	if err := DB.Create(&user).Error; err != nil {
+	if err := DB.Insert(&user).Error; err != nil {
 		t.Fatalf("errors happened when create: %v", err)
 	}
 
 	user.Pets = []*Pet{{Name: "pet1"}, {Name: "pet2"}}
-	if err := DB.Save(&user).Error; err != nil {
+	if err := DB.InsertOrUpdate(&user).Error; err != nil {
 		t.Fatalf("errors happened when update: %v", err)
 	}
 
@@ -27,7 +27,7 @@ func TestUpdateHasManyAssociations(t *testing.T) {
 		pet.Name += "new"
 	}
 
-	if err := DB.Save(&user).Error; err != nil {
+	if err := DB.InsertOrUpdate(&user).Error; err != nil {
 		t.Fatalf("errors happened when update: %v", err)
 	}
 
@@ -35,7 +35,7 @@ func TestUpdateHasManyAssociations(t *testing.T) {
 	DB.Preload("Pets").Find(&user3, "id = ?", user.ID)
 	CheckUser(t, user2, user3)
 
-	if err := DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&user).Error; err != nil {
+	if err := DB.Session(&gorm.Session{FullSaveAssociations: true}).InsertOrUpdate(&user).Error; err != nil {
 		t.Fatalf("errors happened when update: %v", err)
 	}
 
@@ -46,12 +46,12 @@ func TestUpdateHasManyAssociations(t *testing.T) {
 	t.Run("Polymorphic", func(t *testing.T) {
 		var user = *GetUser("update-has-many", Config{})
 
-		if err := DB.Create(&user).Error; err != nil {
+		if err := DB.Insert(&user).Error; err != nil {
 			t.Fatalf("errors happened when create: %v", err)
 		}
 
 		user.Toys = []Toy{{Name: "toy1"}, {Name: "toy2"}}
-		if err := DB.Save(&user).Error; err != nil {
+		if err := DB.InsertOrUpdate(&user).Error; err != nil {
 			t.Fatalf("errors happened when update: %v", err)
 		}
 
@@ -63,7 +63,7 @@ func TestUpdateHasManyAssociations(t *testing.T) {
 			user.Toys[idx].Name += "new"
 		}
 
-		if err := DB.Save(&user).Error; err != nil {
+		if err := DB.InsertOrUpdate(&user).Error; err != nil {
 			t.Fatalf("errors happened when update: %v", err)
 		}
 
@@ -71,7 +71,7 @@ func TestUpdateHasManyAssociations(t *testing.T) {
 		DB.Preload("Toys").Find(&user3, "id = ?", user.ID)
 		CheckUser(t, user2, user3)
 
-		if err := DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&user).Error; err != nil {
+		if err := DB.Session(&gorm.Session{FullSaveAssociations: true}).InsertOrUpdate(&user).Error; err != nil {
 			t.Fatalf("errors happened when update: %v", err)
 		}
 

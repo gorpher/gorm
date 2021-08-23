@@ -12,7 +12,7 @@ import (
 func TestDelete(t *testing.T) {
 	var users = []User{*GetUser("delete", Config{}), *GetUser("delete", Config{}), *GetUser("delete", Config{})}
 
-	if err := DB.Create(&users).Error; err != nil {
+	if err := DB.Insert(&users).Error; err != nil {
 		t.Errorf("errors happened when create: %v", err)
 	}
 
@@ -68,7 +68,7 @@ func TestDeleteWithTable(t *testing.T) {
 	DB.Table("deleted_users").AutoMigrate(UserWithDelete{})
 
 	user := UserWithDelete{Name: "delete1"}
-	DB.Table("deleted_users").Create(&user)
+	DB.Table("deleted_users").Insert(&user)
 
 	var result UserWithDelete
 	if err := DB.Table("deleted_users").First(&result).Error; err != nil {
@@ -104,7 +104,7 @@ func TestDeleteWithTable(t *testing.T) {
 func TestInlineCondDelete(t *testing.T) {
 	user1 := *GetUser("inline_delete_1", Config{})
 	user2 := *GetUser("inline_delete_2", Config{})
-	DB.Save(&user1).Save(&user2)
+	DB.InsertOrUpdate(&user1).InsertOrUpdate(&user2)
 
 	if DB.Delete(&User{}, user1.ID).Error != nil {
 		t.Errorf("No error should happen when delete a record")
@@ -132,11 +132,11 @@ func TestBlockGlobalDelete(t *testing.T) {
 func TestDeleteWithAssociations(t *testing.T) {
 	user := GetUser("delete_with_associations", Config{Account: true, Pets: 2, Toys: 4, Company: true, Manager: true, Team: 1, Languages: 1, Friends: 1})
 
-	if err := DB.Create(user).Error; err != nil {
+	if err := DB.Insert(user).Error; err != nil {
 		t.Fatalf("failed to create user, got error %v", err)
 	}
 
-	if err := DB.Select(clause.Associations, "Pets.Toy").Delete(&user).Error; err != nil {
+	if err := DB.Columns(clause.Associations, "Pets.Toy").Delete(&user).Error; err != nil {
 		t.Fatalf("failed to delete user, got error %v", err)
 	}
 
@@ -156,11 +156,11 @@ func TestDeleteWithAssociations(t *testing.T) {
 func TestDeleteAssociationsWithUnscoped(t *testing.T) {
 	user := GetUser("unscoped_delete_with_associations", Config{Account: true, Pets: 2, Toys: 4, Company: true, Manager: true, Team: 1, Languages: 1, Friends: 1})
 
-	if err := DB.Create(user).Error; err != nil {
+	if err := DB.Insert(user).Error; err != nil {
 		t.Fatalf("failed to create user, got error %v", err)
 	}
 
-	if err := DB.Unscoped().Select(clause.Associations, "Pets.Toy").Delete(&user).Error; err != nil {
+	if err := DB.Unscoped().Columns(clause.Associations, "Pets.Toy").Delete(&user).Error; err != nil {
 		t.Fatalf("failed to delete user, got error %v", err)
 	}
 
@@ -185,11 +185,11 @@ func TestDeleteSliceWithAssociations(t *testing.T) {
 		*GetUser("delete_slice_with_associations4", Config{Account: true, Pets: 1, Toys: 4, Company: true, Manager: true, Team: 4, Languages: 4, Friends: 1}),
 	}
 
-	if err := DB.Create(users).Error; err != nil {
+	if err := DB.Insert(users).Error; err != nil {
 		t.Fatalf("failed to create user, got error %v", err)
 	}
 
-	if err := DB.Select(clause.Associations).Delete(&users).Error; err != nil {
+	if err := DB.Columns(clause.Associations).Delete(&users).Error; err != nil {
 		t.Fatalf("failed to delete user, got error %v", err)
 	}
 
